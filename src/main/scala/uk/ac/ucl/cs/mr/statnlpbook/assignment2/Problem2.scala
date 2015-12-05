@@ -24,8 +24,23 @@ object Problem2 {
                                predict: (X, Weights) => Y,
                                iterations: Int = 2,
                                learningRate: Double = 1.0): Weights = {
-    //TODO implement the averaged perceptron trainer
-    ???
+
+    val weights = new mutable.HashMap[FeatureKey, Double]() withDefaultValue 0.0
+    var avgWeights = new mutable.HashMap[FeatureKey, Double]() withDefaultValue 0.0
+    var count = 0.0;
+    for (i <- 0 to iterations){
+      for ((e, g) <- instances) {
+        val p = predict(e,weights)
+        if(p != g){ // if prediction is wrong - not gold
+          addInPlace(feat(e, g), weights, 1.0) // increase weighting for gold
+          addInPlace(feat(e, p), weights, -1.0) // decrease weighting for incorrect prediction
+        }
+        avgWeights = avgWeights ++ weights.map{ case (k,v) => k -> (v + avgWeights.getOrElse(k,0.0)) } // add new weights to running sum
+        count+=1.0
+      }
+    }
+    for ((k, v) <- avgWeights) avgWeights(k) /= count // divide each value by number summed over to give average
+    avgWeights
   }
 
 
