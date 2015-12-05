@@ -27,7 +27,7 @@ object Problem2 {
 
     val weights = new mutable.HashMap[FeatureKey, Double]() withDefaultValue 0.0
     var avgWeights = new mutable.HashMap[FeatureKey, Double]() withDefaultValue 0.0
-    var count = 0.0;
+    var count = 0.0
     for (i <- 0 to iterations){
       for ((e, g) <- instances) {
         val p = predict(e,weights)
