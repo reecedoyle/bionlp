@@ -64,21 +64,24 @@ object Features {
     feats += FeatureKey("stem of word", List(token.stem,y)) -> 1.0
     feats += FeatureKey("pos of word", List(token.pos, y)) -> 1.0
 
+    feats += FeatureKey("capitalisation", List(token.word.charAt(0).isUpper.toString,y)) -> 1.0
+
 
     if(begin == 0)
-      feats+= FeatureKey("prior word", List(y)) -> 1.0
+      feats+= FeatureKey("prior word", List(y)) -> 1.0      // if Candidate is the first word
     else {
       val prior = thisSentence.tokens(begin-1)
-      feats += FeatureKey("prior word", List(prior.word,y)) -> 1.0
+      feats += FeatureKey("bigram current + prior", List(token.stem,prior.word,y)) -> 1.0
     }
 
+
     if(begin == thisSentence.tokens.size-1)
-      feats+= FeatureKey("next word", List(y)) -> 1.0
+      feats+= FeatureKey("next word", List(y)) -> 1.0   // if Candidate is the last word
     else {
       val next = thisSentence.tokens(begin+1)
-      //feats += FeatureKey("next word and POS", List(next.word, next.pos,y)) -> 1.0
       feats += FeatureKey("next word", List(next.word,y)) -> 1.0
     }
+
 
 
     val mods = thisSentence.deps.filter(e => e.mod == begin).sortBy(_.label).map(e => e.label)

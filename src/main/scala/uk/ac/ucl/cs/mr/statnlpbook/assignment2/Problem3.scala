@@ -45,7 +45,7 @@ object Problem3Triggers {
     // use training algorithm to get weights of model
     //TODO: change the trainer to explore different training algorithms
     //val triggerWeights = PrecompiledTrainers.trainNB(triggerTrain,triggerModel.feat)
-    val triggerWeights = PrecompiledTrainers.trainPerceptron(triggerTrain, triggerModel.feat, triggerModel.predict, 2)
+    val triggerWeights = PrecompiledTrainers.trainPerceptron(triggerTrain, triggerModel.feat, triggerModel.predict, 10)
 
     // evaluate on dev
     // write to file
