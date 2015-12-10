@@ -34,32 +34,32 @@ object Problem3Triggers {
     println(triggerTrain.unzip._2.groupBy(x => x).mapValues(_.length))
     println("True label counts (trigger - dev):")
     println(triggerDev.unzip._2.groupBy(x => x).mapValues(_.length))
-
     // get label set
     val triggerLabels = triggerTrain.map(_._2).toSet
 
+
     // define model
     //TODO: change the features function to explore different types of features
-    val triggerModel = SimpleClassifier(triggerLabels, Features.defaultTriggerFeatures)
+    val triggerModel = SimpleClassifier(triggerLabels, Features.myTriggerFeatures)
 
     // use training algorithm to get weights of model
     //TODO: change the trainer to explore different training algorithms
     //val triggerWeights = PrecompiledTrainers.trainNB(triggerTrain,triggerModel.feat)
     val triggerWeights = PrecompiledTrainers.trainPerceptron(triggerTrain, triggerModel.feat, triggerModel.predict, 2)
 
+    // evaluate on dev
+    // write to file
+    // get predictions on test
     // get predictions on dev
     val (triggerDevPred, triggerDevGold) = triggerDev.map { case (trigger, gold) => (triggerModel.predict(trigger, triggerWeights), gold) }.unzip
-    // evaluate on dev
-    val triggerDevEval = Evaluation(triggerDevGold, triggerDevPred, Set("None"))
+    val triggerTestPred = triggerTest.map { case (trigger, dummy) => triggerModel.predict(trigger, triggerWeights) }
     // print evaluation results
+    val triggerDevEval = Evaluation(triggerDevGold, triggerDevPred, Set("None"))
     println("Evaluation for trigger classification:")
     println(triggerDevEval.toString)
 
     ErrorAnalysis(triggerDev.unzip._1,triggerDevGold,triggerDevPred).showErrors(5)
 
-    // get predictions on test
-    val triggerTestPred = triggerTest.map { case (trigger, dummy) => triggerModel.predict(trigger, triggerWeights) }
-    // write to file
     Evaluation.toFile(triggerTestPred, "./data/assignment2/out/simple_trigger_test.txt")
   }
 }
