@@ -36,16 +36,17 @@ object Problem3Triggers {
     println(triggerDev.unzip._2.groupBy(x => x).mapValues(_.length))
     // get label set
     val triggerLabels = triggerTrain.map(_._2).toSet
+//    println("THESE ARE THE LABELS " + triggerLabels)
 
 
     // define model
     //TODO: change the features function to explore different types of features
-    val triggerModel = SimpleClassifier(triggerLabels, Features.myTriggerFeatures)
+    val triggerModel = SimpleClassifier(triggerLabels, Features.myTriggerFeaturesNB)
 
     // use training algorithm to get weights of model
     //TODO: change the trainer to explore different training algorithms
-    //val triggerWeights = PrecompiledTrainers.trainNB(triggerTrain,triggerModel.feat)
-    val triggerWeights = PrecompiledTrainers.trainPerceptron(triggerTrain, triggerModel.feat, triggerModel.predict, 10)
+    val triggerWeights = PrecompiledTrainers.trainNB(triggerTrain,triggerModel.feat)
+//    val triggerWeights = PrecompiledTrainers.trainPerceptron(triggerTrain, triggerModel.feat, triggerModel.predict, 10)
 
     // evaluate on dev
     // write to file
@@ -98,10 +99,10 @@ object Problem3Arguments {
     val argumentLabels = argumentTrain.map(_._2).toSet
 
     // define model
-    val argumentModel = SimpleClassifier(argumentLabels, Features.defaultArgumentFeatures)
+    val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeatures)
 
     //val argumentWeights = PrecompiledTrainers.trainNB(argumentTrain,argumentModel.feat)
-    val argumentWeights = PrecompiledTrainers.trainPerceptron(argumentTrain,argumentModel.feat,argumentModel.predict,2)
+    val argumentWeights = PrecompiledTrainers.trainPerceptron(argumentTrain,argumentModel.feat,argumentModel.predict,10)
 
     // get predictions on dev
     val (argumentDevPred, argumentDevGold) = argumentDev.map { case (arg, gold) => (argumentModel.predict(arg,argumentWeights), gold) }.unzip
