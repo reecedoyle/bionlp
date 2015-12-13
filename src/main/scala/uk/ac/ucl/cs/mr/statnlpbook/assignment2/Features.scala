@@ -107,8 +107,76 @@ object Features {
     feats += FeatureKey("Proteins in sentence", List(thisSentence.mentions.size.toString,y)) -> 1.0
     feats.toMap
   }
+
+  def myTriggerFeaturesNB(x: Candidate, y: Label) : FeatureVector = {
+    val doc = x.doc
+    val begin = x.begin
+    val end = x.end
+    val thisSentence = doc.sentences(x.sentenceIndex)
+    val token = thisSentence.tokens(begin)
+    val feats = new mutable.HashMap[FeatureKey,Double]
+
+    feats += FeatureKey("label bias", List(y)) -> 1.0
+    feats += FeatureKey("stem of word", List(token.stem,y)) -> 1.0
+//    feats += FeatureKey("pos of word", List(token.pos, y)) -> 1.0
+
+    feats += FeatureKey("capitalisation", List(token.word.count(_.isUpper).toString,y)) -> 1.0
+
+    feats.toMap
+  }
   def myArgumentFeatures(x: Candidate, y: Label): FeatureVector = {
-    ???
+    val doc = x.doc
+    val begin = x.begin
+    val end = x.end
+    val thisSentence = doc.sentences(x.sentenceIndex)
+    val token = thisSentence.tokens(begin)
+    val feats = new mutable.HashMap[FeatureKey,Double]
+
+    feats += FeatureKey("label bias", List(y)) -> 1.0
+
+    feats += FeatureKey("Proteins in sentence", List(thisSentence.mentions.size.toString, y)) -> 1.0
+
+//    feats += FeatureKey("capitalisation", List(token.word.count(_.isUpper).toString,y)) -> 1.0
+
+    // Bigram (each way)
+    if(begin == 0) {
+      feats += FeatureKey("prior word", List(y)) -> 1.0 // if Candidate is the first word
+    }
+    else {
+      val prior = thisSentence.tokens(begin-1)
+      feats += FeatureKey("prior word", List(prior.stem,y)) -> 1.0
+    }
+
+    if(begin == thisSentence.tokens.size-1)
+      feats+= FeatureKey("next word", List(y)) -> 1.0   // if Candidate is the last word
+    else {
+      val next = thisSentence.tokens(begin+1)
+      feats += FeatureKey("next word", List(next.stem,y)) -> 1.0
+    }
+
+    // Trigram prior (the 'begin == 0' case is handled above)
+    if (begin >= 2) {
+      feats += FeatureKey("prior words 3", List(thisSentence.tokens(begin - 2).stem, thisSentence.tokens(begin - 1).stem, y)) -> 0
+    }
+
+    // Trigram next
+    if (begin < thisSentence.tokens.size - 3) {
+      feats += FeatureKey("next words 3", List(thisSentence.tokens(begin + 1).stem, thisSentence.tokens(begin + 2).stem, y)) -> 0
+    }
+
+    feats += FeatureKey("is protein", List(x.isProtein.toString, y)) -> 1.0
+
+    // Getting edges
+    val candidateEdges = thisSentence.events.filter(e => e.arguments.contains(token.word))
+    val candidateIndicies = candidateEdges.map(e => e.sentenceIndex)
+    val candidateWords = candidateIndicies.map(e => thisSentence.tokens(e).stem).sorted //tokens(e).stem
+    val candidatePos = candidateIndicies.map(e => thisSentence.tokens(e).pos)
+
+    feats += FeatureKey("tokens pointing to argument", candidatePos ++ List(y)) -> 1.0
+
+//    feats += FeatureKey("number of tokens pointing to argument", List(candidateIndicies.size.toString, y)) -> 1.0
+
+    feats.toMap
   }
 
 
