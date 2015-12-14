@@ -202,7 +202,7 @@ object Features {
       feats += FeatureKey("candidate is protein", List(x.isProtein.toString,y)) -> 1.0
     //  feats+= FeatureKey("Protein Hifen", List(token.word.contains("-").toString,x.isProtein.toString,y)) -> 1.0
     // -----------------------------------------------------------------------------
-
+    //
 
 
     //                                 Syntax
