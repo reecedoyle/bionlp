@@ -50,8 +50,8 @@ object Problem5{
     // define model
     //TODO: change the features function to explore different types of features
     //TODO: experiment with the unconstrained and constrained (you need to implement the inner search) models
-    val jointModel = JointUnconstrainedClassifier(triggerLabels,argumentLabels,Features.defaultTriggerFeatures,Features.defaultArgumentFeatures)
-    //val jointModel = JointConstrainedClassifier(triggerLabels,argumentLabels,Features.defaultTriggerFeatures,Features.defaultArgumentFeatures)
+    //val jointModel = JointUnconstrainedClassifier(triggerLabels,argumentLabels,Features.defaultTriggerFeatures,Features.defaultArgumentFeatures)
+    val jointModel = JointConstrainedClassifier(triggerLabels,argumentLabels,Features.defaultTriggerFeatures,Features.defaultArgumentFeatures)
 
     // use training algorithm to get weights of model
     val jointWeights = PrecompiledTrainers.trainPerceptron(jointTrain,jointModel.feat,jointModel.predict,2)
@@ -113,7 +113,7 @@ case class JointConstrainedClassifier(triggerLabels:Set[Label],
     }
     def argmax() = {
       var triggerScores = triggerLabels.toSeq.map(y => y -> dot(triggerFeature(x, y), weights)).toMap withDefaultValue 0.0
-      val argScores = new mutable.HashMap[Label, Seq[(Label,Double)]] // stores max scores of all args & their labels for each trigger label
+      val argScores = new mutable.HashMap[Label, Seq[(Label,Double)]]// stores max scores of all args & their labels for each trigger label
       for (tlabel <- triggerLabels){
         argScores(tlabel) = for (arg<-x.arguments) yield candidateArgmax(argumentLabels,arg,weights,argumentFeature)
         if (constraintViolation(tlabel, argScores(tlabel))){
@@ -121,6 +121,12 @@ case class JointConstrainedClassifier(triggerLabels:Set[Label],
           triggerScores = triggerScores - tlabel
         } // violation
       }
+      //if (triggerScores.isEmpty){
+      println("-----")
+      for ((k,v) <- argScores){
+        println(k + ","+ triggerScores(k) +": " + v.toString())
+      }
+      //}
       val maxTrigLabel = triggerScores.maxBy(t => t._2 + argScores(t._1).map(_._2).sum)._1
       (maxTrigLabel,argScores(maxTrigLabel).map(_._1))
     }
