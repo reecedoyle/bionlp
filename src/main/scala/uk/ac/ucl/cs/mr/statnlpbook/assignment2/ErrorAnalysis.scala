@@ -24,7 +24,7 @@ case class ErrorAnalysis(candidates:Seq[Candidate], golds:Seq[Label], preds:Seq[
       }
       sb.toString
     }
-
+/*
     val idx = rng.nextInt(wrong.length)
     val candidate = wrong(idx)._1
     val gold = wrong(idx)._2._1
@@ -43,6 +43,7 @@ case class ErrorAnalysis(candidates:Seq[Candidate], golds:Seq[Label], preds:Seq[
     println(s"Found in file '${candidate.doc.fileName}', in sentence:")
     println(s"${sentenceText}")
     println()
+    */
   }
 
 
