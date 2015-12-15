@@ -104,7 +104,28 @@ case class JointConstrainedClassifier(triggerLabels:Set[Label],
                                        ) extends JointModel {
   def predict(x: Candidate, weights: Weights) = {
     //TODO
-    ???
+    def constraintViolation(tlabel: Label, argScores: Seq[(Label, Double)]): Boolean ={
+      (tlabel == "None" && argScores.count(_._1 != "None") > 0)||(tlabel != "Regulation" && argScores.count(_._1 == "Cause") > 0)||(tlabel != "None" && argScores.count(_._1 == "Theme") == 0)
+    }
+    def candidateArgmax(labels: Set[Label], x: Candidate, weights: Weights, feat:(Candidate,Label)=>FeatureVector) = {
+      val scores = labels.toSeq.map(y => y -> dot(feat(x, y), weights)).toMap withDefaultValue 0.0
+      scores.maxBy(_._2)
+    }
+    def argmax() = {
+      var triggerScores = triggerLabels.toSeq.map(y => y -> dot(triggerFeature(x, y), weights)).toMap withDefaultValue 0.0
+      val argScores = new mutable.HashMap[Label, Seq[(Label,Double)]] // stores max scores of all args & their labels for each trigger label
+      for (tlabel <- triggerLabels){
+        argScores(tlabel) = for (arg<-x.arguments) yield candidateArgmax(argumentLabels,arg,weights,argumentFeature)
+        if (constraintViolation(tlabel, argScores(tlabel))){
+          // set triggerScore to 0 or just remove from map
+          triggerScores = triggerScores - tlabel
+        } // violation
+      }
+      val maxTrigLabel = triggerScores.maxBy(t => t._2 + argScores(t._1).map(_._2).sum)._1
+      (maxTrigLabel,argScores(maxTrigLabel).map(_._1))
+    }
+
+    argmax()
   }
 
 }
