@@ -1,5 +1,7 @@
 package uk.ac.ucl.cs.mr.statnlpbook.assignment2
 
+import javax.swing.text.LabelView
+
 import scala.collection.mutable
 
 /**
@@ -7,6 +9,9 @@ import scala.collection.mutable
  */
 
 object Problem5{
+  //TODO remove these
+  var correctCount = 0
+  var incorrectCount = 0
 
   def main (args: Array[String]) {
     println("Joint Extraction")
@@ -51,7 +56,7 @@ object Problem5{
     //TODO: change the features function to explore different types of features
     //TODO: experiment with the unconstrained and constrained (you need to implement the inner search) models
     //val jointModel = JointUnconstrainedClassifier(triggerLabels,argumentLabels,Features.defaultTriggerFeatures,Features.defaultArgumentFeatures)
-    val jointModel = JointConstrainedClassifier(triggerLabels,argumentLabels,Features.defaultTriggerFeatures,Features.defaultArgumentFeatures)
+    val jointModel = JointConstrainedClassifier(triggerLabels,argumentLabels,Features.myTriggerFeatures,Features.myArgumentFeatures)
 
     // use training algorithm to get weights of model
     val jointWeights = PrecompiledTrainers.trainPerceptron(jointTrain,jointModel.feat,jointModel.predict,2)
@@ -84,6 +89,7 @@ object Problem5{
     val argumentTestPred = jointTestPred.unzip._2.flatten
     // write to file
     Evaluation.toFile(argumentTestPred,"./data/assignment2/out/joint_argument_test.txt")
+    //TODO println("Correct: "+Problem5.correctCount + ", Incorrect: "+Problem5.incorrectCount)
   }
 
 }
@@ -103,32 +109,56 @@ case class JointConstrainedClassifier(triggerLabels:Set[Label],
                                       argumentFeature:(Candidate,Label)=>FeatureVector
                                        ) extends JointModel {
   def predict(x: Candidate, weights: Weights) = {
-    //TODO
     def constraintViolation(tlabel: Label, argScores: Seq[(Label, Double)]): Boolean ={
       (tlabel == "None" && argScores.count(_._1 != "None") > 0)||(tlabel != "Regulation" && argScores.count(_._1 == "Cause") > 0)||(tlabel != "None" && argScores.count(_._1 == "Theme") == 0)
     }
-    def candidateArgmax(labels: Set[Label], x: Candidate, weights: Weights, feat:(Candidate,Label)=>FeatureVector) = {
-      val scores = labels.toSeq.map(y => y -> dot(feat(x, y), weights)).toMap withDefaultValue 0.0
-      scores.maxBy(_._2)
+    def argumentsArgmax(labels: Set[Label], arguments: Seq[Candidate], weights: Weights, feat:(Candidate,Label)=>FeatureVector, tlabel: Label) = {
+      val scores = for (arg<-arguments) yield labels.toSeq.map(y => y -> dot(feat(arg, y), weights)).toMap withDefaultValue 0.0 //e.g. Map(None -> 5.0, Theme -> -8.0, Cause -> 0.0)
+      if(tlabel != "None"){ // match all times of regulation
+        var maxArgScores = (0.0, Seq[Label]()) // stores max score and related labels
+        var firstArg = true
+        for (i <- scores.indices){ // set each arg to theme in turn, then calculate score & see if better than current max
+          val maxScoresLower = scores.zipWithIndex.filterNot(_._2<i).map(_._1.maxBy(_._2)) // Seq[(Label, Double)]
+          val maxScoresHigher = scores.zipWithIndex.filterNot(_._2>i).map(_._1.maxBy(_._2)) // Seq[(Label, Double)]
+          val totalScore = scores(i)("Theme") + maxScoresLower.map(_._2).sum + maxScoresHigher.map(_._2).sum // Double - total score for these arguments
+          if(firstArg){ // if it's the first argument, assign as the max
+            maxArgScores = (totalScore, maxScoresLower.map(_._1)++Seq("Theme")++maxScoresHigher.map(_._1))
+            firstArg = false
+          }
+          else if(maxArgScores._1 < totalScore){ // if the score when this arg being Theme is better
+            maxArgScores = (totalScore, maxScoresLower.map(_._1)++Seq("Theme")++maxScoresHigher.map(_._1))
+          }
+        }
+        // return best argScores element
+        maxArgScores
+      }
+      else{
+        val maxScores = scores.map(_.maxBy(_._2)) // Seq[(Label, Double)]
+        (maxScores.map(_._2).sum, maxScores.map(_._1)) // (Double, Seq[Label])
+      }
     }
     def argmax() = {
       var triggerScores = triggerLabels.toSeq.map(y => y -> dot(triggerFeature(x, y), weights)).toMap withDefaultValue 0.0
-      val argScores = new mutable.HashMap[Label, Seq[(Label,Double)]]// stores max scores of all args & their labels for each trigger label
+      val argScores = new mutable.HashMap[Label, (Double, Seq[Label])]// stores max scores of all args & their labels for each trigger label
       for (tlabel <- triggerLabels){
-        argScores(tlabel) = for (arg<-x.arguments) yield candidateArgmax(argumentLabels,arg,weights,argumentFeature)
-        if (constraintViolation(tlabel, argScores(tlabel))){
-          // set triggerScore to 0 or just remove from map
-          triggerScores = triggerScores - tlabel
-        } // violation
+        var currentArgLabels = argumentLabels
+        if(tlabel == "None"){
+          currentArgLabels = currentArgLabels - "Theme"
+        }
+        if(!tlabel.contains("egulation")){
+          currentArgLabels = currentArgLabels - "Cause"
+        }
+        argScores(tlabel) = argumentsArgmax(currentArgLabels,x.arguments,weights,argumentFeature, tlabel) // return best score & labels (Double, Seq[Label])
       }
-      //if (triggerScores.isEmpty){
-      println("-----")
-      for ((k,v) <- argScores){
-        println(k + ","+ triggerScores(k) +": " + v.toString())
+      val maxTrigLabel = triggerScores.maxBy(t => t._2 + argScores(t._1)._1)._1
+      if(x.gold != maxTrigLabel){
+        //TODO println(maxTrigLabel + " (" + x.gold + ") " + argScores(maxTrigLabel)._2)
+        Problem5.incorrectCount+=1
       }
-      //}
-      val maxTrigLabel = triggerScores.maxBy(t => t._2 + argScores(t._1).map(_._2).sum)._1
-      (maxTrigLabel,argScores(maxTrigLabel).map(_._1))
+      else{
+        Problem5.correctCount+=1
+      }
+      (maxTrigLabel,argScores(maxTrigLabel)._2)
     }
 
     argmax()
