@@ -60,25 +60,25 @@ object Features {
     val token = thisSentence.tokens(begin)
     val feats = new mutable.HashMap[FeatureKey,Double]
 
-    feats += FeatureKey("label bias", List(y)) -> 1.0
-    feats += FeatureKey("stem of word", List(token.stem,y)) -> 1.0
-    feats += FeatureKey("pos of word", List(token.pos, y)) -> 1.0
+    feats += FeatureKey("trig: label bias", List(y)) -> 1.0
+    feats += FeatureKey("trig: stem of word", List(token.stem,y)) -> 1.0
+    feats += FeatureKey("trig: pos of word", List(token.pos, y)) -> 1.0
 
-    feats += FeatureKey("capitalisation", List(token.word.count(_.isUpper).toString,y)) -> 1.0
+    feats += FeatureKey("trig: capitalisation", List(token.word.count(_.isUpper).toString,y)) -> 1.0
 
     if(begin == 0) {
-      feats += FeatureKey("prior word", List(y)) -> 1.0 // if Candidate is the first word
+      feats += FeatureKey("trig: prior word", List(y)) -> 1.0 // if Candidate is the first word
     }
     else {
       val prior = thisSentence.tokens(begin-1)
-      feats += FeatureKey("prior word", List(prior.stem,y)) -> 1.0
+      feats += FeatureKey("trig: prior word", List(prior.stem,y)) -> 1.0
     }
 
     if(begin == thisSentence.tokens.size-1)
-      feats+= FeatureKey("next word", List(y)) -> 1.0   // if Candidate is the last word
+      feats+= FeatureKey("trig: next word", List(y)) -> 1.0   // if Candidate is the last word
     else {
       val next = thisSentence.tokens(begin+1)
-      feats += FeatureKey("next word", List(next.stem,y)) -> 1.0
+      feats += FeatureKey("trig: next word", List(next.stem,y)) -> 1.0
     }
 
     // deps for which token is mod (going up the tree)
@@ -88,23 +88,23 @@ object Features {
       for(mod2 <- mods2){
         val mods3 = thisSentence.deps.filter(e => e.mod == mod2.head).sortBy(d => d.label+d.head+d.mod)
         for(mod3 <- mods3){
-          feats+= FeatureKey("mod3 deps pos", List(mod3.label, thisSentence.tokens(mod3.head).pos,y)) -> 1.0
-          feats+= FeatureKey("mod3 deps stem", List(mod3.label, thisSentence.tokens(mod3.head).stem,y)) -> 1.0
+          feats+= FeatureKey("trig: mod3 deps pos", List(mod3.label, thisSentence.tokens(mod3.head).pos,y)) -> 1.0
+          feats+= FeatureKey("trig: mod3 deps stem", List(mod3.label, thisSentence.tokens(mod3.head).stem,y)) -> 1.0
         }
-        feats+= FeatureKey("mod2 deps pos", List(mod2.label, thisSentence.tokens(mod2.head).pos,y)) -> 1.0
-        feats+= FeatureKey("mod2 deps stem", List(mod2.label, thisSentence.tokens(mod2.head).stem,y)) -> 1.0
+        feats+= FeatureKey("trig: mod2 deps pos", List(mod2.label, thisSentence.tokens(mod2.head).pos,y)) -> 1.0
+        feats+= FeatureKey("trig: mod2 deps stem", List(mod2.label, thisSentence.tokens(mod2.head).stem,y)) -> 1.0
       }
-      feats+= FeatureKey("mod deps pos", List(mod.label, thisSentence.tokens(mod.head).pos,y)) -> 1.0
-      feats+= FeatureKey("mod deps stem", List(mod.label, thisSentence.tokens(mod.head).stem,y)) -> 1.0
+      feats+= FeatureKey("trig: mod deps pos", List(mod.label, thisSentence.tokens(mod.head).pos,y)) -> 1.0
+      feats+= FeatureKey("trig: mod deps stem", List(mod.label, thisSentence.tokens(mod.head).stem,y)) -> 1.0
     }
 
 
     // deps for which token is head (going down the tree)
     val heads = thisSentence.deps.filter(e => e.head == begin).sortBy(d => d.label+d.head+d.mod)
-    feats+= FeatureKey("head deps stem", heads.map(t => (t.label, thisSentence.tokens(t.mod).stem).toString())++List(y)) -> 1.0
-    feats+= FeatureKey("head deps pos", heads.map(t => (t.label, thisSentence.tokens(t.mod).pos).toString())++List(y)) -> 1.0
+    feats+= FeatureKey("trig: head deps stem", heads.map(t => (t.label, thisSentence.tokens(t.mod).stem).toString())++List(y)) -> 1.0
+    feats+= FeatureKey("trig: head deps pos", heads.map(t => (t.label, thisSentence.tokens(t.mod).pos).toString())++List(y)) -> 1.0
 
-    feats += FeatureKey("Proteins in sentence", List(thisSentence.mentions.size.toString,y)) -> 1.0
+    feats += FeatureKey("trig: Proteins in sentence", List(thisSentence.mentions.size.toString,y)) -> 1.0
     feats.toMap
   }
 
@@ -181,7 +181,7 @@ object Features {
 */
 
 
-    feats += FeatureKey("label bias", List(y)) -> 1.0
+    feats += FeatureKey("arg: label bias", List(y)) -> 1.0
 
   //                                 Lexical
   // -----------------------------------------------------------------------------
@@ -189,8 +189,8 @@ object Features {
     //feats += FeatureKey("word of candidate", List(token.word,y)) -> 1.0
     //feats += FeatureKey("word of parentEvent", List(parentToken.word,y)) -> 1.0
      // feats += FeatureKey("capitalisation of candidate", List(token.word(0).isUpper.toString, y)) -> 1.0
-      feats += FeatureKey("pos of parentEvent", List(parentToken.pos,y)) -> 1.0
-      feats += FeatureKey("number of capitalised letters", List(token.word.count(_.isUpper).toString,y)) -> 1.0
+      feats += FeatureKey("arg: pos of parentEvent", List(parentToken.pos,y)) -> 1.0
+      feats += FeatureKey("arg: number of capitalised letters", List(token.word.count(_.isUpper).toString,y)) -> 1.0
    //   feats+= FeatureKey("candidate has hifen", List(token.word.contains("-").toString,y)) -> 1.0
   // -----------------------------------------------------------------------------
 
@@ -199,7 +199,7 @@ object Features {
     //                                Entity
     // -----------------------------------------------------------------------------
    // feats += FeatureKey("Proteins in sentence", List(thisSentence.mentions.size.toString, y)) -> 1.0
-      feats += FeatureKey("candidate is protein", List(x.isProtein.toString,y)) -> 1.0
+      feats += FeatureKey("arg: candidate is protein", List(x.isProtein.toString,y)) -> 1.0
     //  feats+= FeatureKey("Protein Hifen", List(token.word.contains("-").toString,x.isProtein.toString,y)) -> 1.0
     // -----------------------------------------------------------------------------
     //
