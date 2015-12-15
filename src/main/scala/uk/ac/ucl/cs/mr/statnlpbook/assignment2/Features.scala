@@ -220,7 +220,7 @@ object Features {
 
 
     //                                 Other
-    // -----------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------
     //feats += FeatureKey("pos and Isprotein", List(token.pos,x.isProtein.toString,y)) -> 1.0
     feats += FeatureKey("POS", List(token.pos,y)) -> 1.0
     //feats += FeatureKey("POS", List((token.pos == "NN").toString,y)) -> 1.0
