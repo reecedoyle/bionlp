@@ -118,7 +118,7 @@ object Features {
 
     feats += FeatureKey("label bias", List(y)) -> 1.0
     feats += FeatureKey("stem of word", List(token.stem,y)) -> 1.0
-//    feats += FeatureKey("pos of word", List(token.pos, y)) -> 1.0
+//  feats += FeatureKey("pos of word", List(token.pos, y)) -> 1.0
 
     feats += FeatureKey("capitalisation", List(token.word.count(_.isUpper).toString,y)) -> 1.0
 
@@ -131,6 +131,13 @@ object Features {
     val thisSentence = doc.sentences(x.sentenceIndex)
     val token = thisSentence.tokens(begin)
     val parentToken = thisSentence.tokens(x.parentIndex)
+    val parentCandidate = thisSentence.events(x.parentIndex)
+    //val parentArgsCount = parentCandidate.arguments.filter(e=> e.gold != "None").size
+
+   //println(parentCandidate)
+    // println(parentCandidate.arguments.filter(e=> e.gold != "None"))
+
+
     val feats = new mutable.HashMap[FeatureKey,Double]
 
     /*
@@ -180,7 +187,6 @@ object Features {
 //    feats += FeatureKey("number of tokens pointing to argument", List(candidateIndicies.size.toString, y)) -> 1.0
 */
 
-
     feats += FeatureKey("label bias", List(y)) -> 1.0
 
   //                                 Lexical
@@ -188,19 +194,19 @@ object Features {
     //feats += FeatureKey("word of candidate and parentEvent", List(token.word, parentToken.word,y)) -> 1.0
     //feats += FeatureKey("word of candidate", List(token.word,y)) -> 1.0
     //feats += FeatureKey("word of parentEvent", List(parentToken.word,y)) -> 1.0
-     // feats += FeatureKey("capitalisation of candidate", List(token.word(0).isUpper.toString, y)) -> 1.0
-      feats += FeatureKey("pos of parentEvent", List(parentToken.pos,y)) -> 1.0
-      feats += FeatureKey("number of capitalised letters", List(token.word.count(_.isUpper).toString,y)) -> 1.0
-   //   feats+= FeatureKey("candidate has hifen", List(token.word.contains("-").toString,y)) -> 1.0
+    //feats += FeatureKey("capitalisation of candidate", List(token.word(0).isUpper.toString, y)) -> 1.0
+    //feats += FeatureKey("pos of parentEvent", List(parentToken.pos,y)) -> 1.0
+    feats += FeatureKey("number of capitalised letters", List(token.word.count(_.isUpper).toString,y)) -> 1.0
+    //feats+= FeatureKey("candidate has hifen", List(token.word.contains("-").toString,y)) -> 1.0
   // -----------------------------------------------------------------------------
 
 
 
     //                                Entity
     // -----------------------------------------------------------------------------
-   // feats += FeatureKey("Proteins in sentence", List(thisSentence.mentions.size.toString, y)) -> 1.0
-      feats += FeatureKey("candidate is protein", List(x.isProtein.toString,y)) -> 1.0
-    //  feats+= FeatureKey("Protein Hifen", List(token.word.contains("-").toString,x.isProtein.toString,y)) -> 1.0
+    //feats += FeatureKey("Proteins in sentence", List(thisSentence.mentions.size.toString, y)) -> 1.0
+    //feats += FeatureKey("candidate is protein", List(x.isProtein.toString,y)) -> 1.0
+    //feats+= FeatureKey("Protein Hifen", List(token.word.contains("-").toString,x.isProtein.toString,y)) -> 1.0
     // -----------------------------------------------------------------------------
     //
 
@@ -216,27 +222,24 @@ object Features {
     //                                 Other
     // -----------------------------------------------------------------------------
     //feats += FeatureKey("pos and Isprotein", List(token.pos,x.isProtein.toString,y)) -> 1.0
-    //feats+= FeatureKey("absolute distance from candidate", List(Math.abs(x.begin - x.parentIndex).toString,y)) -> 1.0
-   // feats += FeatureKey("Parentcapitalisation count", List(parentToken.word.count(_.isUpper).toString,y)) -> 1.0
-   // feats += FeatureKey("capitalisation count", List(token.word.count(_.isUpper).toString,y)) -> 1.0
+    feats += FeatureKey("POS", List(token.pos,y)) -> 1.0
+    //feats += FeatureKey("POS", List((token.pos == "NN").toString,y)) -> 1.0
+    feats += FeatureKey("isProtein", List(x.isProtein.toString,y)) -> 1.0
+    //feats += FeatureKey("pos of parent and candidate are equal", List((token.pos == parentToken.pos).toString,y)) -> 1.0
+    //feats += FeatureKey("number of arguments of parent", List(parentArgsCount.toString,y)) -> 1.0
+    //feats += FeatureKey("number of arguments of parent is greater than 1", List((parentArgsCount > 1).toString,y)) -> 1.0
+    //feats += FeatureKey("Parentcapitalisation count", List(parentToken.word.count(_.isUpper).toString,y)) -> 1.0
+    //feats += FeatureKey("capitalisation count", List(token.word.count(_.isUpper).toString,y)) -> 1.0
     //feats+= FeatureKey("isProtein and word of parentIndex", List(x.isProtein.toString, parentToken.stem)) -> 1.0
-   // feats+= FeatureKey("contains regulation keyword", List(parentToken.word.toLowerCase().contains("reg").toString, y)) -> 1.0
+    //feats+= FeatureKey("contains regulation keyword", List(parentToken.word.toLowerCase().contains("reg").toString, y)) -> 1.0
     // -----------------------------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    //                                Positional
+    // -----------------------------------------------------------------------------
+    //feats+= FeatureKey("absolute distance from candidate", List(Math.abs(x.begin - x.parentIndex).toString,y)) -> 1.0
+    //feats+= FeatureKey("non-absolute distance from candidate", List((x.begin - x.parentIndex).toString,y)) -> 1.0
+    //feats+= FeatureKey("parent is left or right of candidate", List(Math.signum(x.begin - x.parentIndex).toString,y)) -> 1.0
+    // -----------------------------------------------------------------------------
 
     feats.toMap
   }
