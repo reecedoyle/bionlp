@@ -48,6 +48,19 @@ object Problem3Triggers {
     //val triggerWeights = PrecompiledTrainers.trainNB(triggerTrain,triggerModel.feat)
     val triggerWeights = PrecompiledTrainers.trainPerceptron(triggerTrain, triggerModel.feat, triggerModel.predict, 10)
 
+    // Outputting feature weights
+    val range = 5
+    val template = "trig: pos of word"
+    val highest = true
+
+    if (highest) {
+      println(s"\nTAKING $range HIGHEST TRIGGER WEIGHTS FOR $template\n")
+      println(triggerWeights.filter(e => e._1.template == template).toList.sortBy(_._2).reverse.take(range))
+    } else {
+      println(s"\nTAKING $range LOWEST TRIGGER WEIGHTS FOR $template\n")
+      println(triggerWeights.filter(e => e._1.template == template).toList.sortBy(_._2).take(range))
+    }
+
     // evaluate on dev
     // write to file
     // get predictions on test
