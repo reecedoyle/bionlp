@@ -148,7 +148,7 @@ object Features {
 
 //    feats += FeatureKey("capitalisation", List(token.word.count(_.isUpper).toString,y)) -> 1.0  // number of captialisations in the argument
 
-    // Bigram (each way)
+    // Lexical context (each way)
     if(begin == 0) {
       feats += FeatureKey("prior word", List(y)) -> 1.0 // if Candidate is the first word
     }
