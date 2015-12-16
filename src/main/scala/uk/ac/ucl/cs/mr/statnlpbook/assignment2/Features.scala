@@ -193,16 +193,16 @@ object Features {
 
   //                                 Lexical
   // -----------------------------------------------------------------------------
-    feats += FeatureKey("pos of parent and candidate are equal", List((token.pos == parentToken.pos).toString,y)) -> 1.0
-    feats += FeatureKey("POS", List(token.pos,y)) -> 1.0
-    //feats += FeatureKey("word contains reg", List(token.word.toLowerCase.contains("reg").toString,y)) -> 1.0
-    feats += FeatureKey("value of word", List(token.word,y)) -> 1.0
+    feats += FeatureKey("pos of parent and candidate are equal", List((token.pos == parentToken.pos).toString,y)) -> 1.0 // helps both. generally helps argument extraction
+    feats += FeatureKey("POS", List(token.pos,y)) -> 1.0 // VERY good at telling when argument is none and when it is NOT.
+  //  feats += FeatureKey("word contains reg", List(token.word.toLowerCase.contains("reg").toString,y)) -> 1.0
+    feats += FeatureKey("value of word", List(token.word,y)) -> 1.0 // really good at telling when something is Cause and very good at telling when something is NOT none
     //feats += FeatureKey("word of candidate and parentEvent", List(token.word, parentToken.word,y)) -> 1.0
     //feats += FeatureKey("word of candidate", List(token.word,y)) -> 1.0
     //feats += FeatureKey("word of parentEvent", List(parentToken.word,y)) -> 1.0
-    //feats += FeatureKey("capitalisation of candidate", List(token.word(0).isUpper.toString, y)) -> 1.0
+   // feats += FeatureKey("capitalisation of candidate and is protein", List(token.word(0).isUpper.toString, x.isProtein.toString, y)) -> 1.0  // ability to classify theme goes down but cause goes up.
     //feats += FeatureKey("pos of parentEvent", List(parentToken.pos,y)) -> 1.0
-   // feats += FeatureKey("number of capitalised letters", List(token.word.count(_.isUpper).toString,y)) -> 1.0
+    //feats += FeatureKey("number of capitalised letters", List(token.word.count(_.isUpper).toString,y)) -> 1.0
     //feats+= FeatureKey("candidate has hifen", List(token.word.contains("-").toString,y)) -> 1.0
   // -----------------------------------------------------------------------------
 
@@ -218,7 +218,7 @@ object Features {
     //                                 Syntax
     // -----------------------------------------------------------------------------
     feats += FeatureKey("dependency existence between arg and source trigger", List(thisSentence.deps.filter(e=>(e.head == begin && e.mod == parentToken.begin || e.mod == begin && e.head == parentToken.begin)).isEmpty.toString, y)) -> 1.0
-   // feats += FeatureKey("number of dependencies of parent", List(thisSentence.deps.filter(e=> (e.head == parentToken.begin ||e.mod == parentToken.begin )).size.toString, y)) -> 1.0
+    feats += FeatureKey("number of dependencies of parent", List(thisSentence.deps.filter(e=> (e.head == parentToken.begin ||e.mod == parentToken.begin )).size.toString, y)) -> 1.0
     feats += FeatureKey("number of dependencies of candidate", List(thisSentence.deps.filter(e=> (e.head == token.begin ||e.mod == token.begin )).size.toString, y)) -> 1.0
     // -----------------------------------------------------------------------------
 
@@ -232,14 +232,19 @@ object Features {
       //feats += FeatureKey("silly trigram", List(thisSentence.tokens(begin-1).word,token.word,thisSentence.tokens(begin+1).word,y)) -> 1.0
 
     if(begin >=1)
-      feats += FeatureKey("silly bigram", List(thisSentence.tokens(begin-1).word,token.word,y)) -> 1.0
+      {
+        feats += FeatureKey("silly prior word bigram", List(thisSentence.tokens(begin-1).word,token.word,y)) -> 1.0
+        feats += FeatureKey("silly prior word  pos bigram", List(thisSentence.tokens(begin-1).pos,token.pos,y)) -> 1.0
+      }
+
+
     // -----------------------------------------------------------------------------
 
     //                                Positional
     // -----------------------------------------------------------------------------
-    //feats+= FeatureKey("absolute distance from candidate", List(Math.abs(x.begin - x.parentIndex).toString,y)) -> 1.0
+    //feats+= FeatureKey("absolute distance from candidate", List((Math.abs(x.begin - parentCandidate.begin)).toString,y)) -> 1.0
     //feats+= FeatureKey("non-absolute distance from candidate", List((x.begin - x.parentIndex).toString,y)) -> 1.0
-    //feats+= FeatureKey("parent is left or right of candidate", List(Math.signum(x.begin - x.parentIndex).toString,y)) -> 1.0
+      feats+= FeatureKey("parent is left or right of candidate", List(Math.signum(x.begin - x.parentIndex).toString,y)) -> 1.0
     // -----------------------------------------------------------------------------
 
     feats.toMap

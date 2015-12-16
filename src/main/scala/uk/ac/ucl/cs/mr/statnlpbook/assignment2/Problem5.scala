@@ -93,6 +93,7 @@ object Problem5{
     // write to file
     Evaluation.toFile(argumentTestPred,"./data/assignment2/out/joint_argument_test.txt")
     //TODO println("Correct: "+Problem5.correctCount + ", Incorrect: "+Problem5.incorrectCount)
+    /*
     println("Correct:\n"+correctMap)
     println("Incorrect:\n"+inCorrectMap)
     println("Predictions:")
@@ -107,7 +108,7 @@ object Problem5{
         printf("%20d\t", predMap(pred,gold))
       }
       print("\n")
-    }
+    }*/
   }
 
 }

@@ -117,6 +117,15 @@ object Problem3Arguments {
     //val argumentWeights = PrecompiledTrainers.trainNB(argumentTrain,argumentModel.feat)
     val argumentWeights = PrecompiledTrainers.trainPerceptron(argumentTrain,argumentModel.feat,argumentModel.predict,10)
 
+    // Outputting feature weights
+    val range = 5
+    val template = "absolute distance from candidate"
+    val highest = true
+
+      //println(argumentWeights.filter(e => e._1.template == template).toList.sortBy(_._2).reverse.take(range))
+     // argumentWeights.toList.sortBy(_._2).reverse.filter(e => e._1.template == template).map(e => println(e))//.take(range))
+
+
     // get predictions on dev
     val (argumentDevPred, argumentDevGold) = argumentDev.map { case (arg, gold) => (argumentModel.predict(arg,argumentWeights), gold) }.unzip
     // evaluate on dev
