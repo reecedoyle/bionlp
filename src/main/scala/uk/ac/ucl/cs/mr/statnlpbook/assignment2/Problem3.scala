@@ -45,8 +45,8 @@ object Problem3Triggers {
 
     // use training algorithm to get weights of model
     //TODO: change the trainer to explore different training algorithms
-    //val triggerWeights = PrecompiledTrainers.trainNB(triggerTrain,triggerModel.feat)
     val triggerWeights = PrecompiledTrainers.trainPerceptron(triggerTrain, triggerModel.feat, triggerModel.predict, 10)
+    //val triggerWeights = PrecompiledTrainers.trainNB(triggerTrain,triggerModel.feat)
 
     // Outputting feature weights
     val range = 5
@@ -112,6 +112,7 @@ object Problem3Arguments {
     val argumentLabels = argumentTrain.map(_._2).toSet
 
     // define model
+    //val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeaturesNB)
     val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeatures)
 
     //val argumentWeights = PrecompiledTrainers.trainNB(argumentTrain,argumentModel.feat)
@@ -119,11 +120,11 @@ object Problem3Arguments {
 
     // Outputting feature weights
     val range = 5
-    val template = "absolute distance from candidate"
+    val template = "Arg Dependency between X and Parent"
     val highest = true
 
       //println(argumentWeights.filter(e => e._1.template == template).toList.sortBy(_._2).reverse.take(range))
-     // argumentWeights.toList.sortBy(_._2).reverse.filter(e => e._1.template == template).map(e => println(e))//.take(range))
+      argumentWeights.toList.sortBy(_._2).reverse.filter(e => e._1.template == template).map(e => println(e))//.take(range))
 
 
     // get predictions on dev
