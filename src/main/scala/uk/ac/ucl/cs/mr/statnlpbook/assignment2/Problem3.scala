@@ -112,11 +112,11 @@ object Problem3Arguments {
     val argumentLabels = argumentTrain.map(_._2).toSet
 
     // define model
-    val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeaturesNB)
-    //val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeatures)
+    //val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeaturesNB)
+    val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeatures)
 
-    val argumentWeights = PrecompiledTrainers.trainNB(argumentTrain,argumentModel.feat)
-    //val argumentWeights = PrecompiledTrainers.trainPerceptron(argumentTrain,argumentModel.feat,argumentModel.predict,10)
+    //val argumentWeights = PrecompiledTrainers.trainNB(argumentTrain,argumentModel.feat)
+    val argumentWeights = PrecompiledTrainers.trainPerceptron(argumentTrain,argumentModel.feat,argumentModel.predict,10)
 
     // Outputting feature weights
     val range = 5

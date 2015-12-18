@@ -133,8 +133,8 @@ object Features {
     val end = x.end
     val thisSentence = doc.sentences(x.sentenceIndex)
     val token = thisSentence.tokens(begin)
-    val parentToken = thisSentence.tokens(x.parentIndex)
     val parentCandidate = thisSentence.events(x.parentIndex)
+    val parentToken = thisSentence.tokens(parentCandidate.begin)
     val heads = thisSentence.deps.filter(e => e.head == begin)
     val mods = thisSentence.deps.filter(e => e.mod == begin)
     //val parentArgsCount = parentCandidate.arguments.filter(e=> e.gold != "None").size
@@ -200,9 +200,9 @@ object Features {
     //                                 Lexical
     // -----------------------------------------------------------------------------
     feats += FeatureKey("Arg pos of parent and candidate are equal", List((token.pos == parentToken.pos).toString, y)) -> 1.0 // helps both. generally helps argument extraction
-    feats += FeatureKey("Arg POS", List(token.pos, y)) -> 1.0 // VERY good at telling when argument is none and when it is NOT.
-    //feats += FeatureKey("Arg POS and parent POS", List(token.pos, parentToken.pos, y)) -> 1.0
-    //feats += FeatureKey("Arg Word", List(token.word, y)) -> 1.0
+    feats += FeatureKey("Arg POS and parent POS", List(token.pos, parentToken.pos, y)) -> 1.0
+    //feats += FeatureKey("Arg pos", List(token.pos, y)) -> 1.0 // VERY good at telling when argument is none and when it is NOT.
+    //feats += FeatureKey("Arg parent pos", List(parentToken.pos, y)) -> 1.0
     //feats += FeatureKey("Arg Stem", List(token.stem, y)) -> 1.0
     //feats += FeatureKey("Arg value of word", List(token.word, y)) -> 1.0 // really good at telling when something is Cause and very good at telling when something is NOT none
     //feats += FeatureKey("Arg POS = NN, isProtein", List((token.pos == "NN" && x.isProtein).toString, y)) -> 1.0
@@ -212,10 +212,9 @@ object Features {
     //feats += FeatureKey("Arg Stem of Parent", List(parentToken.stem, y)) -> 1.0
     //feats += FeatureKey("Arg Stem", List(token.stem, y)) -> 1.0
 
-    //feats += FeatureKey("Arg Stem of Parent and isProtein", List(parentToken.stem, x.isProtein.toString, y)) -> 1.0
+    feats += FeatureKey("Arg Stem of Parent and isProtein", List(parentToken.stem, x.isProtein.toString, y)) -> 1.0
     //feats += FeatureKey("word contains reg", List(token.word.toLowerCase.contains("reg").toString,y)) -> 1.0
-    feats += FeatureKey("word of candidate and parentEvent", List(token.word, parentToken.word,y)) -> 1.0
-    //feats += FeatureKey("word of candidate", List(token.word,y)) -> 1.0
+    //feats += FeatureKey("Arg word of candidate and parentEvent", List(token.word, parentToken.word,y)) -> 1.0
     //feats += FeatureKey("word of parentEvent", List(parentToken.word,y)) -> 1.0
     feats += FeatureKey("Arg capitalisation of candidate and is protein", List(token.word.exists(_.isUpper).toString, x.isProtein.toString, y)) -> 1.0  // ability to classify theme goes down but cause goes up.
     //feats += FeatureKey("pos of parentEvent", List(parentToken.pos,y)) -> 1.0
@@ -226,14 +225,16 @@ object Features {
     //                                Entity
     // -----------------------------------------------------------------------------
     feats += FeatureKey("Proteins in sentence", List(thisSentence.mentions.size.toString, y)) -> 1.0
-    //feats += FeatureKey("Arg candidate is protein", List(x.isProtein.toString, y)) -> 1.0
+    feats += FeatureKey("Arg candidate is protein", List(x.isProtein.toString, y)) -> 1.0
     //feats += FeatureKey("Arg isProtein and contains -", List((token.word.contains("-") && x.isProtein).toString, y)) -> 1.0
     // -----------------------------------------------------------------------------
 
 
     //                                 Syntax
     // -----------------------------------------------------------------------------
-    feats += FeatureKey("Arg dependency between arg and source trigger", List(thisSentence.deps.filter(e => (e.head == begin && e.mod == parentToken.begin || e.mod == begin && e.head == parentToken.begin)).toString, y)) -> 1.0
+    feats += FeatureKey("Arg dependency between arg and source trigger head", List(thisSentence.deps.filter(e => (e.head == begin && e.mod == parentToken.begin)).toString, y)) -> 1.0
+    feats += FeatureKey("Arg dependency between arg and source trigger mod", List(thisSentence.deps.filter(e => (e.mod == begin && e.head == parentToken.begin)).toString, y)) -> 1.0
+
     //feats += FeatureKey("Arg dependency existence between arg and source trigger", List(thisSentence.deps.filter(e => (e.head == begin && e.mod == parentToken.begin || e.mod == begin && e.head == parentToken.begin)).isEmpty.toString, y)) -> 1.0
     //feats += FeatureKey("Arg number of dependencies of parent", List(thisSentence.deps.filter(e => (e.head == parentToken.begin || e.mod == parentToken.begin)).size.toString, y)) -> 1.0
     //feats += FeatureKey("Arg number of dependencies of candidate", List(thisSentence.deps.filter(e => (e.head == token.begin || e.mod == token.begin)).size.toString, y)) -> 1.0
@@ -245,12 +246,15 @@ object Features {
     //feats += FeatureKey("Candidate not protein and has same pos as parent", List(x.isProtein.toString, (token.pos == parentToken.pos).toString, y)) -> 1.0 // common occurance for theme arguments
 
     //if(begin >=1 && begin < thisSentence.tokens.size-1)
-      //feats += FeatureKey("silly trigram", List(thisSentence.tokens(begin-1).pos,token.pos,thisSentence.tokens(begin+1).pos,y)) -> 1.0
+    //  feats += FeatureKey("silly pos trigram", List(thisSentence.tokens(begin-1).pos,token.pos,thisSentence.tokens(begin+1).pos,y)) -> 1.0
 
     if (begin >= 1) {
-      //feats += FeatureKey("Arg silly prior stem bigram", List(thisSentence.tokens(begin - 1).stem, token.stem, y)) -> 1.0
+      feats += FeatureKey("Arg silly prior stem bigram", List(thisSentence.tokens(begin - 1).stem, token.stem, y)) -> 1.0
       //feats += FeatureKey("Arg silly prior word bigram", List(thisSentence.tokens(begin - 1).word, token.word, y)) -> 1.0
       feats += FeatureKey("Arg silly prior pos bigram", List(thisSentence.tokens(begin - 1).pos, token.pos, y)) -> 1.0
+    } else {
+      feats += FeatureKey("Arg silly prior stem bigram", List(y)) -> 1.0
+      feats += FeatureKey("Arg silly prior pos bigram", List(y)) -> 1.0
     }
 
     // -----------------------------------------------------------------------------
@@ -261,6 +265,7 @@ object Features {
     //feats+= FeatureKey("non-absolute distance from candidate", List((token.index - x.parentIndex).toString,y)) -> 1.0
     //feats += FeatureKey("Arg parent is left or right of candidate", List(Math.signum(x.begin - x.parentIndex).toString, y)) -> 1.0
     // -----------------------------------------------------------------------------
+
 
     feats.toMap
   }
@@ -296,12 +301,17 @@ object Features {
 
 
     //Other Features
-    feats += FeatureKey("Arg POS and isProtein", List(token.pos, x.isProtein.toString, y)) -> 1.0
-    feats += FeatureKey("Arg pos of parent and candidate are equal", List((token.pos == parentToken.pos).toString, y)) -> 1.0 // helps both. generally helps argument extraction
-    feats += FeatureKey("Arg Capital Letter Exists and isProtein", List(token.word.exists(_.isUpper).toString, x.isProtein.toString, y)) -> 1.0  // very STRONK BOY
-    feats += FeatureKey("Arg Dependency between argument and Parent", List(thisSentence.deps.filter(e => (e.head == begin && e.mod == parentToken.begin || e.mod == begin && e.head == parentToken.begin)).toString, y)) -> 1.0
-    feats += FeatureKey("Arg absolute distance from candidate < 30", List((Math.abs(token.index - x.parentIndex) < 40).toString,y)) -> 1.0
-    feats += FeatureKey("Proteins in sentence", List((thisSentence.mentions.size > 0).toString, y)) -> 1.0
+      feats += FeatureKey("Arg POS and isProtein", List(token.pos, x.isProtein.toString, y)) -> 1.0
+      feats += FeatureKey("Arg pos of parent and candidate are equal", List((token.pos == parentToken.pos).toString, y)) -> 1.0 // helps both. generally helps argument extraction
+      feats += FeatureKey("Arg Capital Letter Exists and isProtein", List(token.word.exists(_.isUpper).toString, x.isProtein.toString, y)) -> 1.0  // very STRONK BOY
+      feats += FeatureKey("Arg Dependency between argument and Parent", List(thisSentence.deps.filter(e => (e.head == begin && e.mod == parentToken.begin || e.mod == begin && e.head == parentToken.begin)).toString, y)) -> 1.0
+      feats += FeatureKey("Arg absolute distance from candidate < 40", List((Math.abs(token.index - x.parentIndex) < 40).toString,y)) -> 1.0
+      feats += FeatureKey("Proteins in sentence", List((thisSentence.mentions.size > 0).toString, y)) -> 1.0
+    if (begin >= 1) {
+      feats += FeatureKey("Arg silly prior pos bigram", List(thisSentence.tokens(begin - 1).pos, token.pos, y)) -> 1.0
+    }
+
+
 
 
     //feats += FeatureKey("Arg word of Parent and candidate", List(token.word, parentToken.word, y)) -> 1.0
