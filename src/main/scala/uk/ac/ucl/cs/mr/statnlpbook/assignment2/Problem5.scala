@@ -98,7 +98,7 @@ object Problem5{
 
     println("Correct:\n"+correctMap)
     println("Incorrect:\n"+inCorrectMap)
-    println("Predictions:")
+    println("Trigger Predictions:")
     printf("%20s\t", "Gold | Pred ->")
     for (pred <- triggerLabels){
       printf("%20s\t", pred)
@@ -108,6 +108,20 @@ object Problem5{
       printf("%20s\t", gold)
       for (pred <- triggerLabels){
         printf("%20d\t", predMap(pred,gold))
+      }
+      print("\n")
+    }
+
+    println("\nArgument Predictions:")
+    printf("%15s\t", "Gold | Pred ->")
+    for (pred <- argumentLabels){
+      printf("%15s\t", pred)
+    }
+    print("\n")
+    for (gold <- argumentLabels){
+      printf("%15s\t", gold)
+      for (pred <- argumentLabels){
+        printf("%15d\t", argPredMap(pred,gold))
       }
       print("\n")
     }
@@ -135,31 +149,21 @@ case class JointConstrainedClassifier(triggerLabels:Set[Label],
       if(tlabel != "None"){ // match all times of regulation
         var maxArgScores = (0.0, Seq[Label]()) // stores max score and related labels
         var firstArg = true
-        if(Problem5.debug && !Problem5.training && tlabel.contains("egulation")) {
-          println("Labels: " + labels)
-        }
-        for (i <- scores.indices){ // set each arg to theme in turn, then calculate score & see if better than current max
-          val maxScoresLower = scores.zipWithIndex.filter(_._2<i).map(_._1.maxBy(_._2)) // Seq[(Label, Double)]
+        for (i <- arguments.indices){ // set each arg to theme in turn, then calculate score & see if better than current max
+          val maxScoresLower = scores.zipWithIndex.filter(_._2<i).map(_._1.maxBy(_._2)) // Seq[(Label, Double)] = max label & score for each other argument
           val maxScoresHigher = scores.zipWithIndex.filter(_._2>i).map(_._1.maxBy(_._2)) // Seq[(Label, Double)]
           val totalScore = scores(i)("Theme") + maxScoresLower.map(_._2).sum + maxScoresHigher.map(_._2).sum // Double - total score for these arguments
           val predictedArgLabels = maxScoresLower.map(_._1)++Seq("Theme")++maxScoresHigher.map(_._1)
+
           if(maxArgScores._1 < totalScore || firstArg){ // if the score when this arg being Theme is better
             maxArgScores = (totalScore, predictedArgLabels)
             firstArg = false
           }
-          if(Problem5.debug && !Problem5.training && tlabel.contains("egulation")){
-            println("-"+i+"-\nScore: " + totalScore)
-            println("Predicted: " + predictedArgLabels.toString())
-            println("Max: " + maxArgScores.toString())
-          }
-        }
-        if(Problem5.debug && !Problem5.training && tlabel.contains("egulation")){
-          Problem5.debug = false
         }
         // return best argScores element
         maxArgScores
       }
-      else{
+      else{ // trigger label is none
         val maxScores = scores.map(_.maxBy(_._2)) // Seq[(Label, Double)]
         (maxScores.map(_._2).sum, maxScores.map(_._1)) // (Double, Seq[Label])
       }
@@ -187,9 +191,9 @@ case class JointConstrainedClassifier(triggerLabels:Set[Label],
         else{
           Problem5.correctCount+=1
           Problem5.correctMap(maxTrigLabel) += 1
-          //println(maxTrigLabel + " (" + x.gold + ") " + argScores(maxTrigLabel)._2)
         }
         Problem5.predMap(maxTrigLabel,x.gold) += 1
+        for(i <- x.arguments.indices) Problem5.argPredMap(argScores(maxTrigLabel)._2(i), x.arguments(i).gold)+=1
       }
       (maxTrigLabel,argScores(maxTrigLabel)._2)
     }
