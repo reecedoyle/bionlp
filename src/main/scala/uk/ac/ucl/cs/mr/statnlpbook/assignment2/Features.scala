@@ -133,8 +133,8 @@ object Features {
     val end = x.end
     val thisSentence = doc.sentences(x.sentenceIndex)
     val token = thisSentence.tokens(begin)
-    val parentToken = thisSentence.tokens(x.parentIndex)
     val parentCandidate = thisSentence.events(x.parentIndex)
+    val parentToken = thisSentence.tokens(parentCandidate.begin)
     val heads = thisSentence.deps.filter(e => e.head == begin)
     val mods = thisSentence.deps.filter(e => e.mod == begin)
     //val parentArgsCount = parentCandidate.arguments.filter(e=> e.gold != "None").size
@@ -200,7 +200,9 @@ object Features {
     //                                 Lexical
     // -----------------------------------------------------------------------------
     feats += FeatureKey("Arg pos of parent and candidate are equal", List((token.pos == parentToken.pos).toString, y)) -> 1.0 // helps both. generally helps argument extraction
-    feats += FeatureKey("Arg POS", List(token.pos, y)) -> 1.0 // VERY good at telling when argument is none and when it is NOT.
+    feats += FeatureKey("Arg POS and parent POS", List(token.pos, parentToken.pos, y)) -> 1.0
+
+    //feats += FeatureKey("Arg POS", List(token.pos, y)) -> 1.0 // VERY good at telling when argument is none and when it is NOT.
     //feats += FeatureKey("Arg POS and parent POS", List(token.pos, parentToken.pos, y)) -> 1.0
     //feats += FeatureKey("Arg Word", List(token.word, y)) -> 1.0
     //feats += FeatureKey("Arg Stem", List(token.stem, y)) -> 1.0
@@ -214,7 +216,7 @@ object Features {
 
     feats += FeatureKey("Arg Stem of Parent and isProtein", List(parentToken.stem, x.isProtein.toString, y)) -> 1.0
     //feats += FeatureKey("word contains reg", List(token.word.toLowerCase.contains("reg").toString,y)) -> 1.0
-    feats += FeatureKey("word of candidate and parentEvent", List(token.word, parentToken.word,y)) -> 1.0
+    //feats += FeatureKey("word of candidate and parentEvent", List(token.word, parentToken.word,y)) -> 1.0
     //feats += FeatureKey("word of candidate", List(token.word,y)) -> 1.0
     //feats += FeatureKey("word of parentEvent", List(parentToken.word,y)) -> 1.0
     feats += FeatureKey("Arg capitalisation of candidate and is protein", List(token.word.exists(_.isUpper).toString, x.isProtein.toString, y)) -> 1.0  // ability to classify theme goes down but cause goes up.
