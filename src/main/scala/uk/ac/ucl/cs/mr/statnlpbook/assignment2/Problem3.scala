@@ -45,20 +45,24 @@ object Problem3Triggers {
 
     // use training algorithm to get weights of model
     //TODO: change the trainer to explore different training algorithms
-    //val triggerWeights = PrecompiledTrainers.trainPerceptron(triggerTrain, triggerModel.feat, triggerModel.predict, 10)
-    val triggerWeights = PrecompiledTrainers.trainNB(triggerTrain,triggerModel.feat)
+    val triggerWeights = PrecompiledTrainers.trainPerceptron(triggerTrain, triggerModel.feat, triggerModel.predict, 10)
+    //val triggerWeights = PrecompiledTrainers.trainNB(triggerTrain,triggerModel.feat)
 
-    // Outputting feature weights
+    // Outputting feature weights TODO remove this debugging code
     val range = 5
-    val template = "trig: pos of word"
-    val highest = true
+    val template = "Trigger: pos of word"
+    val highest = false
 
     if (highest) {
       println(s"\nTAKING $range HIGHEST TRIGGER WEIGHTS FOR $template\n")
-      println(triggerWeights.filter(e => e._1.template == template).toList.sortBy(_._2).reverse.take(range))
+      for (x <- triggerWeights.filter(e => e._1.template == template).toList.sortBy(_._2).reverse.take(range).map(f => f._1.arguments -> f._2).zipWithIndex){
+        println(x._2+1 + ": " + x._1.toString())
+      }
     } else {
       println(s"\nTAKING $range LOWEST TRIGGER WEIGHTS FOR $template\n")
-      println(triggerWeights.filter(e => e._1.template == template).toList.sortBy(_._2).take(range))
+      for (x <- triggerWeights.filter(e => e._1.template == template).toList.sortBy(_._2).take(range).map(f => f._1.arguments -> f._2).zipWithIndex){
+        println(x._2+1 + ": " + x._1.toString())
+      }
     }
 
     // evaluate on dev
@@ -112,11 +116,11 @@ object Problem3Arguments {
     val argumentLabels = argumentTrain.map(_._2).toSet
 
     // define model
-    val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeaturesNB)
-    //val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeatures)
+    //val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeaturesNB)
+    val argumentModel = SimpleClassifier(argumentLabels, Features.myArgumentFeatures)
 
-    val argumentWeights = PrecompiledTrainers.trainNB(argumentTrain,argumentModel.feat)
-    //val argumentWeights = PrecompiledTrainers.trainPerceptron(argumentTrain,argumentModel.feat,argumentModel.predict,10)
+    //val argumentWeights = PrecompiledTrainers.trainNB(argumentTrain,argumentModel.feat)
+    val argumentWeights = PrecompiledTrainers.trainPerceptron(argumentTrain,argumentModel.feat,argumentModel.predict,10)
 
     // Outputting feature weights
     val range = 5
