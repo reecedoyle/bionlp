@@ -7,15 +7,6 @@ import scala.collection.mutable
  */
 
 object Problem5{
-  //TODO remove these
-  var correctCount = 0
-  var incorrectCount = 0
-  val correctMap = new mutable.HashMap[Label, Int]() withDefaultValue 0
-  val incorrectMap = new mutable.HashMap[Label, Int]() withDefaultValue 0
-  val predMap = new mutable.HashMap[(Label,Label), Int]() withDefaultValue 0
-  val argPredMap = new mutable.HashMap[(Label,Label), Int]() withDefaultValue 0
-  var debug = true
-  var training = true
 
   def main (args: Array[String]) {
     println("Joint Extraction")
@@ -57,19 +48,15 @@ object Problem5{
     val argumentLabels = jointTrain.flatMap(_._2._2).toSet
 
     // define model
-    //TODO: change the features function to explore different types of features
-    //TODO: experiment with the unconstrained and constrained (you need to implement the inner search) models
-    //val jointModel = JointUnconstrainedClassifier(triggerLabels,argumentLabels,Features.myTriggerFeatures,Features.myArgumentFeatures)
-    val jointModel = JointConstrainedClassifier(triggerLabels,argumentLabels,Features.myTriggerFeatures,Features.myArgumentFeatures)
+    val jointModel = JointUnconstrainedClassifier(triggerLabels,argumentLabels,Features.myTriggerFeatures,Features.myArgumentFeatures)
+    //val jointModel = JointConstrainedClassifier(triggerLabels,argumentLabels,Features.myTriggerFeatures,Features.myArgumentFeatures)
 
     // use training algorithm to get weights of model
     val jointWeights = PrecompiledTrainers.trainPerceptron(jointTrain,jointModel.feat,jointModel.predict,10)
 
     // get predictions on dev
-    training = false //TODO remove this
     val jointDevPred = jointDev.unzip._1.map { case e => jointModel.predict(e,jointWeights) }
     val jointDevGold = jointDev.unzip._2
-    training = true //TODO remove this
     // Triggers (dev)
     val triggerDevPred = jointDevPred.unzip._1
     val triggerDevGold = jointDevGold.unzip._1
@@ -83,7 +70,7 @@ object Problem5{
     val argumentDevEval = Evaluation(argumentDevGold,argumentDevPred,Set("None"))
     println("Evaluation for argument classification:")
     println(argumentDevEval.toString)
-/*
+
     // get predictions on test
     val jointTestPred = jointTest.unzip._1.map { case e => jointModel.predict(e,jointWeights) }
     // Triggers (test)
@@ -94,37 +81,7 @@ object Problem5{
     val argumentTestPred = jointTestPred.unzip._2.flatten
     // write to file
     Evaluation.toFile(argumentTestPred,"./data/assignment2/out/joint_argument_test.txt")
-    //TODO println("Correct: "+Problem5.correctCount + ", Incorrect: "+Problem5.incorrectCount)
-*/
-    println("Correct:\n"+correctMap)
-    println("Incorrect:\n"+incorrectMap)
-    println("Trigger Predictions:")
-    printf("%20s\t", "Gold | Pred ->")
-    for (pred <- triggerLabels){
-      printf("%20s\t", pred)
-    }
-    print("\n")
-    for (gold <- triggerLabels){
-      printf("%20s\t", gold)
-      for (pred <- triggerLabels){
-        printf("%20d\t", predMap(pred,gold))
-      }
-      print("\n")
-    }
 
-    println("\nArgument Predictions:")
-    printf("%15s\t", "Gold | Pred ->")
-    for (pred <- argumentLabels){
-      printf("%15s\t", pred)
-    }
-    print("\n")
-    for (gold <- argumentLabels){
-      printf("%15s\t", gold)
-      for (pred <- argumentLabels){
-        printf("%15d\t", argPredMap(pred,gold))
-      }
-      print("\n")
-    }
   }
 
 }
@@ -144,6 +101,7 @@ case class JointConstrainedClassifier(triggerLabels:Set[Label],
                                       argumentFeature:(Candidate,Label)=>FeatureVector
                                        ) extends JointModel {
   def predict(x: Candidate, weights: Weights) = {
+    // following method is the argmax steps that concern the arguments
     def argumentsArgmax(labels: Set[Label], arguments: Seq[Candidate], weights: Weights, feat:(Candidate,Label)=>FeatureVector, tlabel: Label) = {
       val scores = for (arg<-arguments) yield labels.toSeq.map(y => y -> dot(feat(arg, y), weights)).toMap withDefaultValue 0.0 //e.g. Map(None -> 5.0, Theme -> -8.0, Cause -> 0.0)
       if(tlabel != "None"){ // match all times of regulation
@@ -176,29 +134,12 @@ case class JointConstrainedClassifier(triggerLabels:Set[Label],
         if(tlabel == "None"){
           currentArgLabels = currentArgLabels - "Theme"
         }
-        if(!tlabel.contains("egulation")){
+        if(!tlabel.contains("egulation")){ // is not a regulation event
           currentArgLabels = currentArgLabels - "Cause"
         }
         argScores(tlabel) = argumentsArgmax(currentArgLabels,x.arguments,weights,argumentFeature, tlabel) // return best score & labels (Double, Seq[Label])
       }
       val maxTrigLabel = triggerScores.maxBy(t => t._2 + argScores(t._1)._1)._1
-      if(Problem5.debug && !Problem5.training){
-        triggerLabels.foreach(label => printf("-----\nTrigger: %f, Args: %f, Total: %f, #Args: %d, Per-Arg: %f\n",triggerScores(label),argScores(label)._1,triggerScores(label)+argScores(label)._1, x.arguments.size, argScores(label)._1/x.arguments.size))
-        Problem5.debug = false
-      }
-      if(!Problem5.training){
-        if(x.gold != maxTrigLabel){
-          //TODO println(maxTrigLabel + " (" + x.gold + ") " + argScores(maxTrigLabel)._2)
-          Problem5.incorrectCount+=1
-          Problem5.incorrectMap(maxTrigLabel) += 1
-        }
-        else{
-          Problem5.correctCount+=1
-          Problem5.correctMap(maxTrigLabel) += 1
-        }
-        Problem5.predMap(maxTrigLabel,x.gold) += 1
-        for(i <- x.arguments.indices) Problem5.argPredMap(argScores(maxTrigLabel)._2(i), x.arguments(i).gold)+=1
-      }
       (maxTrigLabel,argScores(maxTrigLabel)._2)
     }
 
@@ -236,20 +177,6 @@ case class JointUnconstrainedClassifier(triggerLabels:Set[Label],
     }
     val bestTrigger = argmax(triggerLabels,x,weights,triggerFeature)
     val bestArguments = for (arg<-x.arguments) yield argmax(argumentLabels,arg,weights,argumentFeature)
-    //TODO REMOVE THIS DEBUGGING:
-    if(!Problem5.training){
-      if(x.gold != bestTrigger){
-        //TODO println(maxTrigLabel + " (" + x.gold + ") " + argScores(maxTrigLabel)._2)
-        Problem5.incorrectCount+=1
-        Problem5.incorrectMap(bestTrigger) += 1
-      }
-      else{
-        Problem5.correctCount+=1
-        Problem5.correctMap(bestTrigger) += 1
-        //println(bestTrigger + " (" + x.gold + ") " + bestArguments)
-      }
-      Problem5.predMap(bestTrigger,x.gold) += 1
-    }
     (bestTrigger,bestArguments)
   }
 
