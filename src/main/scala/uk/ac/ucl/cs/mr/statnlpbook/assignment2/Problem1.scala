@@ -35,7 +35,7 @@ object Problem1 {
         }
       }
     }
-    weights//.toMap // return immutable map of weights
+    weights// return map of weights
   }
 
 

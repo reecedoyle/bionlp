@@ -26,23 +26,32 @@ object Problem2 {
                                learningRate: Double = 1.0): Weights = {
 
     val weights = new mutable.HashMap[FeatureKey, Double]() withDefaultValue 0.0
-    var avgWeights = new mutable.HashMap[FeatureKey, Double]() withDefaultValue 0.0
+    val avgWeights = new mutable.HashMap[FeatureKey, Double]() withDefaultValue 0.0
+    val lastUpdate = new mutable.HashMap[FeatureKey, Double]() withDefaultValue 0.0 // last update of each feature (iteration)
     var count = 0.0
     for (i <- 0 to iterations){
       for ((e, g) <- instances) {
         val p = predict(e,weights)
+        count+=1.0 // weights have been used once more
         if(p != g){ // if prediction is wrong - not gold
-          addInPlace(feat(e, g), weights, 1.0) // increase weighting for gold
-          addInPlace(feat(e, p), weights, -1.0) // decrease weighting for incorrect prediction
+          val goldFeats = feat(e,g)
+          val predFeats = feat(e,p)
+          for ((k, v) <- goldFeats ++ predFeats) { // iterate over each changed feature
+            avgWeights(k) += weights(k) * (count - lastUpdate(k)) // current weight times duration of it
+            lastUpdate(k) = count // about to be updated so last update is current count
+          }
+          addInPlace(goldFeats, weights, 1.0) // increase weighting for gold
+          addInPlace(predFeats, weights, -1.0) // decrease weighting for incorrect prediction
         }
-        avgWeights = avgWeights ++ weights.map{ case (k,v) => k -> (v + avgWeights.getOrElse(k,0.0)) } // add new weights to running sum
-        count+=1.0
       }
     }
-    for ((k, v) <- avgWeights) avgWeights(k) /= count // divide each value by number summed over to give average
+    for ((k,v) <- weights){
+      avgWeights(k) += v * (count - lastUpdate(k)) // Final update to ensure all weights are included up to final count
+    }
+    for ((k,_) <- avgWeights) avgWeights(k) /= count // divide each value by number summed over to give average
     avgWeights
   }
-
+// alternative is to store last update time of each feature as a separate map
 
   /**
    * Run this code to evaluate your implementation of your avereaged perceptron algorithm trainer

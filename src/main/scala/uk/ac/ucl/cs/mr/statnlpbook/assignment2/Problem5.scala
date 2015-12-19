@@ -11,7 +11,7 @@ object Problem5{
   var correctCount = 0
   var incorrectCount = 0
   val correctMap = new mutable.HashMap[Label, Int]() withDefaultValue 0
-  val inCorrectMap = new mutable.HashMap[Label, Int]() withDefaultValue 0
+  val incorrectMap = new mutable.HashMap[Label, Int]() withDefaultValue 0
   val predMap = new mutable.HashMap[(Label,Label), Int]() withDefaultValue 0
   val argPredMap = new mutable.HashMap[(Label,Label), Int]() withDefaultValue 0
   var debug = true
@@ -83,7 +83,7 @@ object Problem5{
     val argumentDevEval = Evaluation(argumentDevGold,argumentDevPred,Set("None"))
     println("Evaluation for argument classification:")
     println(argumentDevEval.toString)
-
+/*
     // get predictions on test
     val jointTestPred = jointTest.unzip._1.map { case e => jointModel.predict(e,jointWeights) }
     // Triggers (test)
@@ -95,9 +95,9 @@ object Problem5{
     // write to file
     Evaluation.toFile(argumentTestPred,"./data/assignment2/out/joint_argument_test.txt")
     //TODO println("Correct: "+Problem5.correctCount + ", Incorrect: "+Problem5.incorrectCount)
-
+*/
     println("Correct:\n"+correctMap)
-    println("Incorrect:\n"+inCorrectMap)
+    println("Incorrect:\n"+incorrectMap)
     println("Trigger Predictions:")
     printf("%20s\t", "Gold | Pred ->")
     for (pred <- triggerLabels){
@@ -182,11 +182,15 @@ case class JointConstrainedClassifier(triggerLabels:Set[Label],
         argScores(tlabel) = argumentsArgmax(currentArgLabels,x.arguments,weights,argumentFeature, tlabel) // return best score & labels (Double, Seq[Label])
       }
       val maxTrigLabel = triggerScores.maxBy(t => t._2 + argScores(t._1)._1)._1
+      if(Problem5.debug && !Problem5.training){
+        triggerLabels.foreach(label => printf("-----\nTrigger: %f, Args: %f, Total: %f, #Args: %d, Per-Arg: %f\n",triggerScores(label),argScores(label)._1,triggerScores(label)+argScores(label)._1, x.arguments.size, argScores(label)._1/x.arguments.size))
+        Problem5.debug = false
+      }
       if(!Problem5.training){
         if(x.gold != maxTrigLabel){
           //TODO println(maxTrigLabel + " (" + x.gold + ") " + argScores(maxTrigLabel)._2)
           Problem5.incorrectCount+=1
-          Problem5.inCorrectMap(maxTrigLabel) += 1
+          Problem5.incorrectMap(maxTrigLabel) += 1
         }
         else{
           Problem5.correctCount+=1
@@ -237,7 +241,7 @@ case class JointUnconstrainedClassifier(triggerLabels:Set[Label],
       if(x.gold != bestTrigger){
         //TODO println(maxTrigLabel + " (" + x.gold + ") " + argScores(maxTrigLabel)._2)
         Problem5.incorrectCount+=1
-        Problem5.inCorrectMap(bestTrigger) += 1
+        Problem5.incorrectMap(bestTrigger) += 1
       }
       else{
         Problem5.correctCount+=1
