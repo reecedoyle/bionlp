@@ -10,6 +10,8 @@
 \usepackage[toc,page]{appendix}
 \usepackage{caption} 
 \captionsetup[table]{skip=10pt}
+\usepackage{cite}
+
 
 %\documentstyle[nips14submit_09,times,art10]{article} % For LaTeX 2.09
 
@@ -77,6 +79,7 @@ The results for our averaged perceptron with the default setup show it to be a l
 
 In this section we outline and motivate potential feature templates for trigger and argument classification. Where possible, concrete training set examples are also provided. The best set of features (for both perceptron and Naive Bayes learning methods) are then presented.
 
+Naive Bayes is a generative model and perceptron is discriminative.  Generative models account for the prior probability $p(x)$ of seeing a token. Maximising this model results in maximising $\log(p(y|x)) + \log(p(x))$. In text classification, we only care about finding the most likely label for a token, i.e. only maximising $p(y|x)$ and not $p(x)$. By optimising for both, we may sacrifice higher values for $p(y|x)$ to optimise for $p(x)$, giving us less accurate label predictions. However in the perceptron model, we only optimise for $p(y|x)$. This is why we expect the perceptron learning algorithm to perform better.
 
 In choosing features for Naive Bayes, we consider that features are all independent and are weighted equally. This means that features should be tailored towards identifying specific labels instead of discriminating against the token being of a certain label. Further, choosing features that are similar will end up in maximising the prior probability instead of $p(y|x)$, resulting in poorer classification ability. We choose a subset of distinct features from the features outlined below that showed the best discriminative power.
 
@@ -111,8 +114,35 @@ We consider features involving the mod/head, stem of the parent, dependency and 
 Features which look at the next token do not discriminate between the current token's possible labels as well as the previous token, but they help nonetheless. An example is assigning the label Positive regulation when the next token has stem 'chromosom'.
 
 \subsubsection{Perceptron features}
+\begin{itemize*}
+\item Stem of word
+\item POS of word
+\item Number of capital letters in word
+\item Prior word
+\item Next word
+\item Number of proteins in sentence
+\item Level 1 dependency count
+\item Level 2 dependency count
+\item Level 3 dependency count
+\item Level 1 dependency type and POS of mod
+\item Level 2 dependency type and POS of mod
+\item Level 3 dependency type and POS of mod
+\item Level 1 dependency type and stem of mod
+\item Level 2 dependency type and stem of mod
+\item Level 3 dependency type and stem of mod
+\item Level 1 dependency type and stem of head
+\item Level 1 dependency type and POS of head
+\end{itemize*}
+
 
 \subsubsection{Naive-Bayes features}
+\begin{itemize*}
+\item Stem of word
+\item Number of capital letters in word
+\item Number of proteins in sentence
+\item Level 1 dependency type and POS of mod
+\end{itemize*}
+
 
 \subsection{Argument features}
 
@@ -138,7 +168,7 @@ Features which look at the next token do not discriminate between the current to
 
 \textbf{Number of McClosky dependencies on candidate.} Counting the number of dependencies on the candidate can provide insight on what argument type it may be as arguments of a specific type can have more dependencies than others. In addition to this, it also recognises events which are also arguments effectively as they are likely to have many dependencies and relationships with other tokens in the data.
 
-\textbf{Number of McClosky dependencies on parent.} Additionally, counting the number of dependencies on the parent can help classify which type of event it may relate to and therefore assist in classifying the candidate to a specific argument type.
+\textbf{Number of McClosky dependencies on parent.} Counting the number of dependencies on the parent can help classify which type of event it may relate to and therefore assist in classifying the candidate to a specific argument type.
 
 \subsubsection{Other}
 
