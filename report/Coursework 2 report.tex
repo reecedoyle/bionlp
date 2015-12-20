@@ -75,8 +75,7 @@ The results for our averaged perceptron with the default setup show it to be a l
 
 \section{Feature Engineering and Evaluation}
 
-In this section we first outline features we thought of, independent of the learning algorithm used. We then list the features we used for each of the perceptron and Naive Bayes algorithms. Finally we present the performance of trigger and argument classification.
-
+In this section we outline and motivate potential feature templates for trigger and argument classification. Where possible, concrete training set examples are also provided. The best set of features (for both perceptron and Naive Bayes learning methods) are then presented.
 
 
 In choosing features for Naive Bayes, we consider that features are all independent and are weighted equally. This means that features should be tailored towards identifying specific labels instead of discriminating against the token being of a certain label. Further, choosing features that are similar will end up in maximising the prior probability instead of $p(y|x)$, resulting in poorer classification ability. We choose a subset of distinct features from the features outlined below that showed the best discriminative power.
