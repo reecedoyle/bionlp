@@ -150,7 +150,7 @@ Features which look at the next token do not discriminate between the current to
 
 \subsubsection{Lexical}
 
-\textbf{POS.} Part-of-speech features can provide semantic and contextual information related to the candidate and parent tokens of the data sets. For example, theme arguments generally have a part-of-speech value of ?NN?, which can be used to differentiate theme arguments from cause and none types. Looking at the part-of-speech value for events can reveal information related to their child arguments as certain events are likely to have a specific part-of-speech related to them. The part-of-speech values can be combined to create unique pairs of them which can be used to map a specific argument classes to part-of-speech pairings in a one-to-many relationship.
+\textbf{POS.} Part-of-speech features can provide semantic and contextual information related to the candidate and parent tokens of the data sets. For example, theme arguments generally have a part-of-speech value of 'NN', which can be used to differentiate theme arguments from cause and none types. Looking at the part-of-speech value for events can reveal information related to their child arguments as certain events are likely to have a specific part-of-speech related to them. The part-of-speech values can be combined to create unique pairs of them which can be used to map a specific argument classes to part-of-speech pairings in a one-to-many relationship.
 
 \textbf{Value of word.} The word value of candidates and parents can be used as base measures to classify arguments as they will give a base relation between specific words and how they are related to arguments. Certain argument types are likely to relate to specific sets of words so creating features based on these values should provide a large amount of data for the classifier models to use. Conjunctions of word based features can also be used to create specific word pairs or sets that can be used to target argument types with higher precision.
 
@@ -218,6 +218,38 @@ Features which look at the next token do not discriminate between the current to
 \end{itemize*}
 
 \subsection{Results}
+
+\begin{table}[hbt]
+\centering
+\caption{Trigger classification results}
+\label{perceptron_results_3}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+Learning algorithm & Feature set used & Average precision & Average recall & Average F1 \\ \hline
+Perceptron         & Perceptron       & 0.1940            & 0.8132         & 0.3133     \\ \hline
+Naive Bayes        & Perceptron       & 0.0142            & 0.1323         & 0.0256     \\ \hline
+Naive Bayes        & Naive Bayes      & 0.1609            & 0.7500         & 0.2650     \\ \hline
+\end{tabular}
+\end{table}
+
+First we implemented lexical features, yielding an average F1 score of 0.1237. Adding entity features increased the score to 0.1735. Syntax features increased the score by a considerable amount to 0.2540. Finally including all other features raised the score to 0.3133. 
+
+\begin{table}[hbt]
+\centering
+\caption{Argument classification results}
+\label{argument_results_3}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+Learning algorithm & Feature set used & Average precision & Average recall & Average F1 \\ \hline
+Perceptron         & Perceptron       & 0.07338           & 0.8675         & 0.1353     \\ \hline
+Naive Bayes        & Perceptron       & 0.01311           & 0.9066         & 0.02585    \\ \hline
+Naive              & Naive Bayes      & 0.06565           & 0.6635         & 0.1195     \\ \hline
+\end{tabular}
+\end{table}
+
+As additional features were applied to the models, the improvements to the scores were recorded to provide insight as to which groups of features provided the largest overall benefit. For the perceptron model, the lexical features alone provided an average F1 score of 0.0375 showing that alone they did not provide accurate classifications. However, adding entity features improves the score to 0.0494 showing that these features work well in conjunction with each other. Adding syntactic features using the McClosky dependencies between words improves the score further by to 0.0628 and adding prior word features on top that pushes the score to 0.0985. Finally, adding positional features provides the final score of 0.1353.
+
+For the Naive Bayes model, using only the lexical features provides an F1 score of 0.12 but it does not classify any cause statements whatsoever. Therefore, additional features were added in an attempt to classify cause at the expense of the F1 score. Adding entity features didn?t provide any assistance in classifying cause and also didn?t alter the F1 score. However, adding syntactic and positional features allowed for the model to classify theme arguments and only changed the F1 score to 0.119.
 
 \section{Joint Perceptron}
 
@@ -364,7 +396,8 @@ Another way to potentially resolve errors could be to change from a joint model 
 
 \newpage
 \begin{appendices}
-\section{Examples of features in data set}
+\section{Examples of trigger features}
+\section{Examples of argument features}
 \end{appendices}
 
 \bibliography{references}{}
