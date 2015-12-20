@@ -7,6 +7,9 @@
 \usepackage{float}
 \usepackage{enumitem}
 \usepackage{multirow}
+\usepackage[toc,page]{appendix}
+\usepackage{caption} 
+\captionsetup[table]{skip=10pt}
 
 %\documentstyle[nips14submit_09,times,art10]{article} % For LaTeX 2.09
 
@@ -14,10 +17,12 @@
 \title{COMPGI19 Assignment 2 Report}
 
 \author{
-Navid Halalgenes\\
-Department of Computer Science\\
-University College London\\
-\texttt{navid.hallajian.12@ucl.ac.uk} \\
+Kapileshwar Syamsundar
+\And
+Coauthor \\
+Affiliation \\
+Address \\
+\texttt{email} \\
 }
 
 \newcommand{\fix}{\marginpar{FIX}}
@@ -71,6 +76,8 @@ The results for our averaged perceptron with the default setup show it to be a l
 \section{Feature Engineering and Evaluation}
 
 In this section we first outline features we thought of, independent of the learning algorithm used. We then list the features we used for each of the perceptron and Naive Bayes algorithms. Finally we present the performance of trigger and argument classification.
+
+
 
 In choosing features for Naive Bayes, we consider that features are all independent and are weighted equally. This means that features should be tailored towards identifying specific labels instead of discriminating against the token being of a certain label. Further, choosing features that are similar will end up in maximising the prior probability instead of $p(y|x)$, resulting in poorer classification ability. We choose a subset of distinct features from the features outlined below that showed the best discriminative power.
 
@@ -142,7 +149,7 @@ Features which look at the next token do not discriminate between the current to
 
 \textbf{Prior POS.} For the same reason as the other prior techniques, creating pairs of parts-of-speech provide more contextual data to the classification process.
 
-\textbf{Absolute token distance between candidate and parent.} From observing the training data, it can be seen that arguments are often located close to their parent token, meaning that bounds can be set to filter out arguments of type none. This value can be obtained as an absolute value or signed value to determine whether the candidate lies on the left or right side of it?s parent which can be used to obtain more positional information for specific arguments.
+\textbf{Absolute token distance between candidate and parent.} From observing the training data, it can be seen that arguments are often located close to their parent token, meaning that bounds can be set to filter out arguments of type none. This value can be obtained as an absolute value or signed value to determine whether the candidate lies on the left or right side of it?s parent which can be used to obtain more positional information for specific arguments. Upon inspection of the training data, most distances above the value of 40 tended to be none-type arguments so the value was used as a cutoff point feature to classify none tokens.
 
 \textbf{Candidate part-of-speech is 'NN' and is a protein.} A combination of part-of-speech and whether the candidate is a protein or not can be used to classify theme arguments specifically. From observation of the training set, there are an abundance of cases where a theme argument has the part-of-speech 'NN' and is also a protein.
 
@@ -241,19 +248,90 @@ Using the default split of 80\% training data and 20\% development data from 500
 \centering
 \caption{Performance of models}
 \label{table:all_perf}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{|c|l|l|l|l|}
 \hline
-\multicolumn{1}{|l|}{Candidate} & Metric            & Per-task Models     & Unconstrained Joint Model & Constrained Joint Model \\ \hline
-\multirow{3}{*}{Trigger}        & Average precision & 0.24909456740442656 & 0.21118221623442238       & 0.20689655172413793     \\ \cline{2-5} 
-                                & Average recall    & 0.8028534370946823  & 0.8132295719844358        & 0.8015564202334631      \\ \cline{2-5} 
-                                & Average F1        & 0.38022113022113024 & 0.33529411764705885       & 0.3288983501862693      \\ \hline
-\multirow{3}{*}{Argument}       & Average precision & 0.07337526205450734 & 0.12308868501529052       & 0.15421455938697318     \\ \cline{2-5} 
-                                & Average recall    & 0.8674928503336511  & 0.6139180171591992        & 0.4604385128693994      \\ \cline{2-5} 
-                                & Average F1        & 0.13530592521002158 & 0.20506288807514728       & 0.23104520449653193     \\ \hline
+\multicolumn{1}{|l|}{Candidate} & Metric            & Per-task Models & Unconstrained Joint Model & Constrained Joint Model \\ \hline
+\multirow{3}{*}{Trigger}        & Average precision & 0.1940          & 0.1806                    & 0.2729                  \\ \cline{2-5} 
+                                & Average recall    & 0.8132          & 0.8003                    & 0.7691                  \\ \cline{2-5} 
+                                & Average F1        & 0.3133          & 0.2947                    & 0.4029                  \\ \hline
+\multirow{3}{*}{Argument}       & Average precision & 0.07338         & 0.1362                    & 0.1864                  \\ \cline{2-5} 
+                                & Average recall    & 0.8675          & 0.6330                    & 0.3880                  \\ \cline{2-5} 
+                                & Average F1        & 0.1353          & 0.2242                    & 0.2518                  \\ \hline
+\end{tabular}
+}
+\end{table}
+The average F1 results in Table \ref{table:all_perf}  show that the joint models are a lot better at predicting the argument labels than the per-task model, with the constrained joint model being the best. Although the recall of argument labels is decreased for both joint models, the precision is increased, resulting in a higher average harmonic mean between the two metrics. However, it is the opposite for trigger classification: the joint models perform worse than the per-task model, with the constrained joint model performing the worst. The unconstrained joint model does have a higher recall than the per-task model for triggers but the decrease in precision for both models results in a lower average harmonic mean.
+It is likely that the reason for the constrained joint model having the highest average precision for arguments is that the set of labels is reduced for most argument candidates as a result of the constraints.
+
+\section{Error Analysis}
+\subsection{Best model}
+Overall we found our best model to be the joint constrained model, trained on the perceptron learning algorithm. The performance metrics we valued the highest when choosing our best model were precision and harmonic mean. While recall scores indicated a measure of completeness (quantity), we opted for precision?s measure of exactness (quality) as a more relevant performance indicator.
+
+\subsection{Types of errors}
+As approximate precision was X, all labels suffered from errors in classification. The event label with the least misclassifications was phosphorylation while the model struggled with precision for regulation events the most. It was found that the most common types of errors were mislabelling a candidate trigger to be none. A concrete example of such an instance is shown in insert ref here.
+
+The average precision for argument classification was Y. As with trigger classification, it was found that the main error was misclassifying candidate arguments to be of type none. An example instance of when this happened is shown in the appendix.
+
+The frequency of these types of errors can be inferred from the following tables, where the columns represent the predicted label and the rows represent the true label:
+
+% Please add the following required packages to your document preamble:
+% \usepackage{graphicx}
+\begin{table}[htb]
+\centering
+\caption{Predictions vs true labels for event triggers}
+\label{my-label}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|}
+\hline
+Gold | Prediction   & Phosphorylation & Negative regulation & Regulation & Protein catabolism & Binding & Positive regulation & Localization & Transcription & None & Gene expression \\ \hline
+Phosphorylation     & 18              & 0                   & 0          & 0                  & 0       & 0                   & 0            & 0             & 2    & 0               \\ \hline
+Negative regulation & 0               & 47                  & 3          & 0                  & 0       & 6                   & 0            & 1             & 10   & 5               \\ \hline
+Regulation          & 0               & 0                   & 63         & 0                  & 0       & 11                  & 1            & 0             & 13   & 3               \\ \hline
+Protein catabolism  & 0               & 0                   & 0          & 10                 & 0       & 0                   & 0            & 0             & 5    & 0               \\ \hline
+Binding             & 0               & 1                   & 1          & 0                  & 54      & 6                   & 0            & 0             & 11   & 7               \\ \hline
+Positive regulation & 0               & 1                   & 10         & 0                  & 0       & 172                 & 0            & 0             & 32   & 13              \\ \hline
+Localization        & 0               & 0                   & 0          & 0                  & 0       & 0                   & 25           & 0             & 0    & 6               \\ \hline
+Transcription       & 0               & 0                   & 1          & 0                  & 0       & 0                   & 1            & 38            & 5    & 13              \\ \hline
+None                & 12              & 83                  & 279        & 11                 & 174     & 564                 & 31           & 89            & 5649 & 241             \\ \hline
+Gene expression     & 0               & 0                   & 0          & 0                  & 0       & 5                   & 1            & 0             & 4    & 166             \\ \hline
+\end{tabular}
+}
+\end{table}
+
+\begin{table}[htb]
+\centering
+\caption{Predictions vs true labels for argument triggers}
+\label{my-label}
+\begin{tabular}{|l|l|l|l|}
+\hline
+Gold | Prediction & None & Theme & Cause \\ \hline
+None & 84070 & 1763 & 3 \\ \hline
+Theme & 554 & 407 & 0 \\ \hline
+Cause & 77 & 11 & 0 \\ \hline
 \end{tabular}
 \end{table}
 
-The average F1 results in Table  show that the joint models are a lot better at predicting the argument labels than the per-task model, with the constrained joint model being the best. Although the recall of argument labels is decreased for both joint models, the precision is increased, resulting in a higher average harmonic mean between the two metrics. However, it is the opposite for trigger classification: the joint models perform worse than the per-task model, with the constrained joint model performing the worst. The unconstrained joint model does have a higher recall than the per-task model for triggers but the decrease in precision for both models results in a lower average harmonic mean.
-It is likely that the reason for the constrained joint model having the highest average precision for arguments is that the set of labels is reduced for most argument candidates as a result of the constraints.
+\subsection{Errors it helps to prevent}
+In the joint models, arguments and triggers are predicted together and so classification occurs together. This idea is very useful for argument extraction as an argument is defined over multiple words (source trigger and the argument candidate itself).
+
+So the types of error that joint models help prevent are mainly applicable to arguments where prior knowledge of the trigger label influences the labels for its corresponding arguments. For example, if it is known that the trigger is regulation, then the arguments for such a trigger can be limited to only be of label cause. 
+
+As a result, even if the trained weights predict an illegal label, through constraints we can force classifications to a label (potentially the correct one) of a lower score. In the case of the earlier example, we found a significant increase in precision of labelling an argument as cause from X to Y.
+
+
+\subsection{Unresolved errors}
+Using joint model, we can resolve further errors with argument features by enforcing further constraints and heuristics from studying the dataset that target specific trigger labels and limit the range of legal possibilities for given argument candidates. This would primarily help resolve errors where candidates with true labels that are not none are mislabelled as other non ?none? labels. However as observed by the error analysis, these instances are quite rare.
+
+Though the constraints lower the number of possible label combinations to predict, it does not address the problem of candidates misclassified as none. This problem lies with the features chosen. The current features do not help to strongly discriminate between identifying candidates with label none against other specific labels. This is why the majority of the incorrectly predicted candidates are labelled as none. Engineering features that capture information more relevant to specific labels (as opposed to those that are more generic to any label) are how such errors can be resolved.
+
+Potentially another way to resolve errors could be to change from a joint model to a pipeline one. In this pipeline model, triggers could be predicted labels first and then these predictions incorporated when predicting arguments. This means feature templates for arguments could access predicted parent token labels. The pipeline model would still effectively be a joint model but the constraints are implemented on a lower level instead, where they can be of a more specific and complex nature.
+
+
+
+\newpage
+\begin{appendices}
+\section{Examples of features in data set}
+\end{appendices}
 
 \end{document}
