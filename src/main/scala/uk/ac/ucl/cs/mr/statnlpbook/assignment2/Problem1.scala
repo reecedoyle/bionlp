@@ -1,5 +1,7 @@
 package uk.ac.ucl.cs.mr.statnlpbook.assignment2
 
+import java.io.File
+
 import scala.collection.mutable
 
 /**
@@ -45,7 +47,6 @@ object Problem1 {
    * @param args
    */
   def main (args: Array[String] ) {
-
     val train_dir = "./data/assignment2/bionlp/train"
 
     // load train and dev data
