@@ -5,7 +5,7 @@
 \usepackage{graphicx}
 \usepackage{mathtools}
 \usepackage{float}
-\usepackage{enumitem}
+\usepackage[inline]{enumitem}
 \usepackage{multirow}
 \usepackage[toc,page]{appendix}
 \usepackage{caption} 
@@ -155,7 +155,7 @@ Features which look at the next token do not discriminate between the current to
 
 \subsubsection{Perceptron features}
 
-\begin{itemize}
+\begin{itemize*}
 
 \item Boolean check part-of-speech of candidate and parent are equivalent
 \item Combination of the parts-of-speech of the candidate and parent
@@ -170,11 +170,11 @@ Features which look at the next token do not discriminate between the current to
 \item Part-of-speech of prior word and candidate
 \item Absolute distance between the candidate and parent in token units
 
-\end{itemize}
+\end{itemize*}
 
 \subsubsection{Naive-Bayes features}
 
-\begin{itemize}
+\begin{itemize*}
 
 \item Combination of candidate part-of-speech and protein tag check
 \item Boolean check if candidate and parent have equivalent parts-of-speech
@@ -184,7 +184,7 @@ Features which look at the next token do not discriminate between the current to
 \item Boolean check if the number of proteins in the sentence is greater than zero
 \item Prior part-of-speech check for candidate
 
-\end{itemize}
+\end{itemize*}
 
 \subsection{Results}
 
@@ -269,18 +269,20 @@ It is likely that the reason for the constrained joint model having the highest 
 Overall we found our best model to be the joint constrained model, trained on the perceptron learning algorithm. The performance metrics we valued the highest when choosing our best model were precision and harmonic mean. While recall scores indicated a measure of completeness (quantity), we opted for precision?s measure of exactness (quality) as a more relevant performance indicator.
 
 \subsection{Types of errors}
-As approximate precision was X, all labels suffered from errors in classification. The event label with the least misclassifications was phosphorylation while the model struggled with precision for regulation events the most. It was found that the most common types of errors were mislabelling a candidate trigger to be none. A concrete example of such an instance is shown in insert ref here.
+With an average precision of 0.273, all labels suffered from errors in classification. The event label with the least misclassifications was phosphorylation while the model struggled with precision for regulation events the most. It was found that the most common types of errors (across all types of triggers) were mislabelling candidate triggers to be none. The following sentence shows an instance of this.
 
-The average precision for argument classification was Y. As with trigger classification, it was found that the main error was misclassifying candidate arguments to be of type none. An example instance of when this happened is shown in the appendix.
+?Activation and expression of the nuclear factors of activated T cells, NFATp and NFATc, in human natural killer cells: regulation upon CD16 ligand binding.?
 
-The frequency of these types of errors can be inferred from the following tables, where the columns represent the predicted label and the rows represent the true label:
+For argument classification, average precision was 0.187. As with trigger classification, it was found that the main error was misclassifying candidate arguments to be of type none. An example instance of when this happened is shown below.
 
-% Please add the following required packages to your document preamble:
-% \usepackage{graphicx}
+?Both nuclear run-on and actinomycin D pulse experiments strongly indicate that HU regulates c-jun mRNA expression by increasing the rate of synthesis as well as stabilizing the c-jun mRNA.?
+
+The frequency of these types of errors can be inferred from tables \ref{table:trigs_results} and \ref{table:args_results}, where the columns represent the predicted label and the rows represent the true label.
+
 \begin{table}[htb]
 \centering
 \caption{Predictions vs true labels for event triggers}
-\label{my-label}
+\label{table:trigs_results}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|}
 \hline
@@ -302,7 +304,7 @@ Gene expression     & 0               & 0                   & 0          & 0    
 \begin{table}[htb]
 \centering
 \caption{Predictions vs true labels for argument triggers}
-\label{my-label}
+\label{table:args_results}
 \begin{tabular}{|l|l|l|l|}
 \hline
 Gold | Prediction & None & Theme & Cause \\ \hline
@@ -317,15 +319,15 @@ In the joint models, arguments and triggers are predicted together and so classi
 
 So the types of error that joint models help prevent are mainly applicable to arguments where prior knowledge of the trigger label influences the labels for its corresponding arguments. For example, if it is known that the trigger is regulation, then the arguments for such a trigger can be limited to only be of label cause. 
 
-As a result, even if the trained weights predict an illegal label, through constraints we can force classifications to a label (potentially the correct one) of a lower score. In the case of the earlier example, we found a significant increase in precision of labelling an argument as cause from X to Y.
+As a result, even if the trained weights predict an illegal label, through constraints we can force classifications to a label (potentially the correct one) of a lower score.
 
 
 \subsection{Unresolved errors}
-Using joint model, we can resolve further errors with argument features by enforcing further constraints and heuristics from studying the dataset that target specific trigger labels and limit the range of legal possibilities for given argument candidates. This would primarily help resolve errors where candidates with true labels that are not none are mislabelled as other non ?none? labels. However as observed by the error analysis, these instances are quite rare.
+Using joint model, we can resolve further errors with argument features by enforcing further constraints and heuristics from studying the dataset that target specific trigger labels and limit the range of legal possibilities for given argument candidates. This would primarily help resolve errors where candidates with true labels that are not none are mislabelled as other non ?none? labels. However, as observed by the error analysis, these instances are quite rare. 
 
-Though the constraints lower the number of possible label combinations to predict, it does not address the problem of candidates misclassified as none. This problem lies with the features chosen. The current features do not help to strongly discriminate between identifying candidates with label none against other specific labels. This is why the majority of the incorrectly predicted candidates are labelled as none. Engineering features that capture information more relevant to specific labels (as opposed to those that are more generic to any label) are how such errors can be resolved.
+Although the constraints lower the number of possible label combinations to predict, it does not address the problem of candidates misclassified as none. This problem lies with the features chosen. The current features do not help to strongly discriminate between identifying candidates with label none against other specific labels. This is why the majority of the incorrectly predicted candidates are labelled as none. In the case of the label Cause, it is always predicted as none Engineering features that capture information more relevant to specific labels (as opposed to those that are more generic to any label) are how such errors can be resolved.
 
-Potentially another way to resolve errors could be to change from a joint model to a pipeline one. In this pipeline model, triggers could be predicted labels first and then these predictions incorporated when predicting arguments. This means feature templates for arguments could access predicted parent token labels. The pipeline model would still effectively be a joint model but the constraints are implemented on a lower level instead, where they can be of a more specific and complex nature.
+Another way to potentially resolve errors could be to change from a joint model to a pipeline one. In this pipeline model, triggers could be predicted labels first and then these predictions incorporated when predicting arguments. This means feature templates for arguments could access predicted parent token labels. The pipeline model would still effectively be a joint model but the constraints are implemented on a lower level instead, where they can be of a more specific and complex nature.
 
 
 
