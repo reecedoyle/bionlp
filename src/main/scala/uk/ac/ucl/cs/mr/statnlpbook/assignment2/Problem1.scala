@@ -21,6 +21,7 @@ object Problem1 {
    * @tparam Y type of output.
    * @return a linear model trained using the perceptron algorithm.
    */
+
   def trainPerceptron[X, Y](instances: Seq[(X, Y)],
                             feat: (X, Y) => FeatureVector,
                             predict: (X, Weights) => Y,
