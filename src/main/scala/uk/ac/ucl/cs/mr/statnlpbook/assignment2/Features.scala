@@ -123,9 +123,14 @@ object Features {
 
     feats += FeatureKey("label bias", List(y)) -> 1.0
     feats += FeatureKey("stem of word", List(token.stem, y)) -> 1.0
-    //  feats += FeatureKey("pos of word", List(token.pos, y)) -> 1.0
-
     feats += FeatureKey("capitalisation", List(token.word.count(_.isUpper).toString, y)) -> 1.0
+    feats += FeatureKey("Proteins in sentence", List(thisSentence.mentions.size.toString, y)) -> 1.0
+
+    // The Crippler, coming to a screen near you
+    val mods = thisSentence.deps.filter(e => e.mod == begin).sortBy(d => d.label + d.head + d.mod)
+    for (mod <- mods) {
+      feats += FeatureKey("mod deps pos", List(mod.label, thisSentence.tokens(mod.head).pos, y)) -> 1.0
+    }
 
     feats.toMap
   }
