@@ -1,0 +1,28 @@
+\begin{thebibliography}{1}
+
+\bibitem{1}
+Lishuang Li, Yiwen Wang, and Degen Huang.
+\newblock Improving feature-based biomedical event extraction system by
+  integrating argument information.
+\newblock {\em Proceedings of the BioNLP Shared Task 2013 Workshop}, page
+  109–115, 2013.
+
+\bibitem{3}
+MAKOTO MIWA, RUNE SAETRE, JIN-DONG KIM, and JUNICHI TSUJII.
+\newblock Event extraction with complex event classification using rich
+  features.
+\newblock {\em Journal of Bioinformatics and Computational Biology}, page 135,
+  2010.
+
+\bibitem{2}
+Arzucan Ozgur and Dragomir~R. Radev.
+\newblock Supervised classification for extracting biomedical events.
+\newblock {\em Proceedings of the Workshop on BioNLP}, page 111–114, 2009.
+
+\bibitem{4}
+Deepak Venugopal, Chen Chen, Vibhav Gogate, and Vincent Ng.
+\newblock Relieving the computational bottleneck: Joint inference for event
+  extraction with high-dimensional features.
+\newblock {\em . In Proceedings of EMNLP}, 2014.
+
+\end{thebibliography}
