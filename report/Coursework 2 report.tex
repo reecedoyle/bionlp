@@ -375,7 +375,7 @@ Cause & 77 & 11 & 0 \\ \hline
 \end{tabular}
 \end{table}
 
-\subsection{Errors it helps to prevent}
+\subsection{Error prevention ability}
 In the joint models, arguments and triggers are predicted together and so classification occurs together. This idea is very useful for argument extraction as an argument is defined over multiple words (source trigger and the argument candidate itself).
 
 So the types of error that joint models help prevent are mainly applicable to arguments where prior knowledge of the trigger label influences the labels for its corresponding arguments. For example, if it is known that the trigger is regulation, then the arguments for such a trigger can be limited to only be of label cause. 
@@ -383,7 +383,7 @@ So the types of error that joint models help prevent are mainly applicable to ar
 As a result, even if the trained weights predict an illegal label, through constraints we can force classifications to a label (potentially the correct one) of a lower score.
 
 
-\subsection{Error prevention ability}
+\subsection{Unresolved errors}
 Using the constrained joint model, we can resolve further errors with argument features by enforcing further constraints and heuristics (from studying the dataset) that target specific trigger labels and limit the range of legal possibilities for given argument candidates. This would primarily help resolve errors where candidates with true labels that are not \emph{None} are mislabelled as other non \emph{None} labels. However as observed by the error analysis, these instances are quite rare. 
 
 Although the constraints lower the number of possible label combinations to predict, it does not address the problem of candidates misclassified as \emph{None}. This problem lies with the features chosen. The current features do not help to strongly discriminate between identifying candidates with label \emph{None} against other specific labels. This is why the majority of the incorrectly predicted candidates are labelled as \emph{None}. In the case of the label \emph{Cause}, it is always predicted as \emph{None}. Engineering features that capture information more relevant to specific labels (as opposed to those that are more generic to any label) are how such errors can be resolved.
