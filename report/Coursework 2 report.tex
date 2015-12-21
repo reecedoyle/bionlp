@@ -431,7 +431,7 @@ Giving the gradient
 
 As the derivation shows, the gradient of the conditional likelihood objective is the empirical expectation minus the predicted expectation for each feature and training example. During each epoch of gradient ascent, the gradient needs to be evaluated but this can take $\mathcal{O}(nd)$ time, where $n$ is the number of training examples and $d$ is their dimensionality. It is therefore prohibitively expensive to calculate these expectations for every epoch: this is a naive approach.
 
-A tractable method for evaluating the gradient would involve either not using all training examples or not using all features, our proposed method chooses the former of these two. Instead of summing the expectations of all training instances, a training instance is uniformly chosen at random to be used in calculating the expectations and then this is multiplied by the size of the training set, $n$, to give the gradient. For a training instance $(c,x)$, we have $n \sum_j f_j (c, x) - f_j (\hat{c}, x)$.
+A tractable method for evaluating the gradient would involve either not using all training examples or not using all features; our proposed method chooses the former of these two. Instead of summing the expectations of all training instances, a training instance is uniformly chosen at random to be used in calculating the expectations and then this is multiplied by the size of the training set, $n$, to give the gradient. For a training instance $(c,x)$, we have $n \sum_j f_j (c, x) - f_j (\hat{c}, x)$.
 
 The pseudocode for the algorithm is given below.
 
