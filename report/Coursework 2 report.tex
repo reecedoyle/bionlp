@@ -58,9 +58,9 @@ For this problem, we implemented a perceptron trainer with the default setup; th
 The results show that our trainer has lower precision and higher recall than the precompiled trainer but, overall, has roughly the same harmonic mean of the two (F1).
 \section{Implementation of Average Perceptron}
 
-Our first implementation of the averaged perceptron involved keeping a running sum of the weights used for each prediction and then, after each instance and iteration, dividing the weights by the number of predictions made. However, this naive implementation is slow because every weight (even those that have not changed) is added to the sum of weights after every prediction. In this domain, there are potentially many hundreds of thousands of features and respective weights; accessing and summing all of these weights for every training instance of every iteration is very inefficient.
+Our first implementation of the averaged perceptron involved keeping a running sum of the weights used for each prediction and then, after each instance, dividing the weights by the number of predictions made. However, this naive implementation is slow because every weight is added to the sum of weights after every prediction. In this domain, there are potentially many thousands of features and weights; summing all of these weights for every training instance and iteration is inefficient.
 
-Instead, we devised an alternate algorithm for accumulating the weights used for each prediction during training: for each prediction, only weights that are being changed (i.e. those associated with a candidate and the gold or predicted label) are added to the sum of weights, drastically reducing the number of weights accessed after each prediction. We achieve this by storing the last time each weight was modified so that when a weight is about to be changed, the duration of the current weight is known and can be multiplied by the weight to give the sum of that weight over the duration. This can then be added to the running sum of weights.
+Instead, we devised an alternate algorithm for accumulating the weights during training: for each prediction, only weights that are being changed are added to the sum of weights, drastically reducing the number of weights accessed after each prediction. We achieve this by storing the last time each weight was modified and, when a weight is about to be changed, the duration of the current weight is known and can be multiplied by the weight to give the sum of that weight over the duration. This can then be added to the running sum of weights.
 
 The results for our averaged perceptron with the default setup show it to be a lot better than the precompiled perceptron; these are shown in Table \ref{table:2_perf}.
 
@@ -80,33 +80,29 @@ The results for our averaged perceptron with the default setup show it to be a l
 
 \section{Feature Engineering and Evaluation}
 
-We first consider the difference between the perceptron and Naive Bayes learning algorithms.
-
-Generative models like Naive Bayes account for the prior probability $p(x)$ of seeing a token. Maximising this model results in maximising $\log(p(y|x)) + \log(p(x))$. In text classification, we only care about finding the most likely label for a token $p(y|x)$. Optimising for both, sacrifices higher values of $p(y|x)$ to optimise for $p(x)$, giving less accurate predictions. However, the perceptron model only optimises for $p(y|x)$ and so it is expected for this model to perform better.
+We first consider the difference between the perceptron and Naive Bayes learning algorithms. Generative models like Naive Bayes account for the prior probability $p(x)$ of seeing a token. Maximising this model results in maximising $\log(p(y|x)) + \log(p(x))$. In text classification, we only care about finding the most likely label for a token $p(y|x)$. Optimising for both, sacrifices higher values of $p(y|x)$ to optimise for $p(x)$, giving less accurate predictions. However, the perceptron model only optimises for $p(y|x)$ and so it is expected for this model to perform better.
 
 For Naive Bayes, features are independent and weighted equally. This means that features should be tailored towards identifying specific labels instead of discriminating against the tokens of a certain label. Further, choosing similar features results in maximising the prior probability leading to poorer classification. We choose a distinct subset showing the best discriminative power from the features below.
 
-We outline and motivate potential feature templates for trigger and argument classification. Where possible, concrete evidence is provided either through training set examples or highly weighted features from training. The best set of features (for both perceptron and Naive Bayes learning methods) are then presented.
+We outline and motivate potential feature templates for trigger and argument classification. Where possible, evidence is provided either through training set examples or highly weighted features from training. The best set of features (for both perceptron and Naive Bayes methods) are then presented.
 Papers that provided inspiration for features have been referenced next to the feature name.
 
 \subsection{Trigger features}
 
 \subsubsection{Lexical}
 
-\textbf{Stem of token.} Many events of the same label share a common stem instead of the word itself. To generalise better, we take the stem of the word. 
-
+\textbf{Stem of token.} Many events of the same label share a common stem instead of the word itself; to generalise better, we use the stem.
 This feature works well to discriminate against labels. For example, when the stem is \emph{inhibit}, a low weighting is given to the token being \emph{Positive regulation}.
 
 
 \textbf{POS of token.} \cite{1} Words like conjunctions are less likely to indicate events; we expect events to be verbs since they indicate an action. The highest weighted feature in this class was for tokens with POS \emph{CC} (coordinating conjunction) to have label \emph{None}, supporting our claim. 
-
 We see that this feature performs strongest in determining whether or not a token is of label None.
 
 \textbf{Capitalisation.} \cite{1} This feature counts the number of capital letters in the token. In addition to capturing when a candidate was the first word of a sentence, without the need for creating an extra feature template, we can also infer if the candidate was a protein.
 
 \subsubsection{Entity-based}
 
-\textbf{Number of proteins in sentence.} Having no proteins in the sentence makes it less likely that the sentence contains any event. Our highest weighted feature for this template was assigning a label of \emph{None} to the current token if there were no proteins in the sentence, giving evidence that our intuition is correct. However, this feature template doesn't discriminate well between events of type other than \emph{None}.
+\textbf{Number of proteins in sentence.} Having no proteins in the sentence makes it less likely that the sentence contains any event. Our highest weighted feature for this template was assigning a label of \emph{None} to the current token if there were no proteins in the sentence, giving evidence that our intuition is correct. However, this feature template doesn't discriminate well between non-\emph{None} events.
 
 \subsubsection{Syntax-based}
 
@@ -260,14 +256,11 @@ Because the unconstrained model is such that the label assigned to a trigger is 
 
 \begin{verbatim}
 argmax(labels, candidate, weights, feat):
-  scores = []
-  for (elem in labels):
-   featureVector = feat(candidate, elem) // create feature Vector
-   score = dot(weights, featureVector)       
-   scores.append((score, elem))
-
-   // return the label of the score with highest score value
-   return maxBy(scores.elem).label 
+  for (label in labels):
+    featureVector = feat(candidate, label) // create feature Vector
+    score = dot(weights, featureVector)
+    scores(label) = score
+  return max(scores).key // return highest-scoring label
 \end{verbatim}
 
 \subsection{Constrained joint model}
@@ -284,28 +277,19 @@ This method of implementing the constraints is a lot more efficient than calcula
 
 \begin{verbatim}
 argmax(triggerLabels, argLabels, x):
-  // get maximum total score for each trigger label
   for tlabel in triggerLabels:
     triggerScore(tlabel) = score(x,tlabel) // independent trigger score
-    // apply constraints 1 and 3
-    if(tlabel is "None"):
+    if(tlabel is "None"): // apply constraints 1 and 3
       currentArgLabels = argLabels - "Theme" - “Cause”
-    
     else if(tlabel is not a regulation event label):
-      currentArgLabels = argLabels - "Cause"
-      
+      currentArgLabels = argLabels - "Cause" 
     else:
       currentArgLabels = argLabels
-      
-    // get maximum total argument score for this trigger label
     if (tlabel is not None):
-      for (arg in x.arguments):
-        // apply constraint 2, ensure one argument is Theme
-        argScore(arg) = score(arg,“Theme”) + sum of max score of other arguments
-        
+      for (arg in x.arguments): // apply constraint 2, one arg must be Theme
+        argScore(arg) = score(arg,“Theme”) + sum of max score of other arguments  
     else:
-      argScore(arg) = sum of max scores of all arguments
-      
+      argScore(arg) = sum of max scores of all arguments   
   totalScore(tlabel) = triggerScore(tlabel) + max(argScore)
   return labels that gave max(totalScore)
 \end{verbatim}
@@ -331,9 +315,9 @@ Using the default split of 80\% training data and 20\% development data from 500
 \end{tabular}
 }
 \end{table}
-The results in Table \ref{table:all_perf} show that, overall, the joint models improve upon the per-task models. The unconstrained joint model is a massive improvement over the isolated argument model, with almost a doubling in average precision and a sacrifice of average recall resulting in a higher harmonic mean (F1) of the two metrics. However, the unconstrained joint model performs worse than the isolated trigger model in both precision and recall, though the improved argument labelling certainly outweighs this. The constrained joint model further improves upon the F1 score for arguments despite a decrease in average recall. It is likely that the average precision of the constrained model for arguments is greater than that of the unconstrained model because the constraints restrict the number of labels that are available for certain arguments, given the labelling of their parent trigger - this decreases the probability of an argument being mislabelled.
+The results in Table \ref{table:all_perf} show that, overall, the joint models improve upon the per-task models. The unconstrained joint model is a massive improvement over the isolated argument model: with higher average precision and a sacrifice of average recall resulting in a higher harmonic mean (F1) of the two metrics. However, the unconstrained joint model performs worse than the isolated trigger model in both precision and recall, but the improved argument labelling certainly outweighs this. The constrained model further improves upon the F1 score for arguments despite a decrease in average recall. It is likely that the precision of the constrained model for arguments is greater than that of the unconstrained model because the constraints restrict the number of labels that are available, given the labelling of the parent trigger. This decreases the probability of an argument being mislabelled.
 
-For trigger classification, the isolated model performs slightly better than the unconstrained model but the constrained model has a much higher average harmonic mean score than both. As with the labelling of arguments, the constrained joint model has a lower average recall than the other two models for the labelling of triggers but the average precision is much better. Again, this is likely to be due to the constraints restricting the labels available for the arguments, based on the labelling of the trigger. This means that if the most likely label for a trigger is incorrect and its arguments violate the constraints for that label, then it is likely that the trigger will be relabelled according to what fits best for the labelling of the arguments.
+For trigger classification, the isolated model performs slightly better than the unconstrained model but the constrained model has a much higher average F1 than both. As with the arguments, the constrained model has lower average recall than the other two models for triggers but the average precision is much better. Again, this is likely to be due to the constraints restricting the labels available for the arguments, based on the labelling of the trigger. This means that if the most likely label for a trigger is incorrect and its arguments violate the constraints for that label, then it is likely that the trigger will be relabelled according to what fits best for the labelling of the arguments.
 
 \section{Error Analysis}
 \subsection{Best performing model}
@@ -388,38 +372,29 @@ Cause & 77 & 11 & 0 \\ \hline
 \subsection{Error prevention ability}
 In the joint models, arguments and triggers are predicted together and so classification occurs together. This idea is very useful for argument extraction as an argument is defined over multiple words (source trigger and the argument candidate itself).
 
-So the types of error that joint models help prevent are mainly applicable to arguments where prior knowledge of the trigger label influences the labels for its corresponding arguments. For example, if it is known that the trigger is regulation, then the arguments for such a trigger can be limited to only be of label cause. 
-
-As a result, even if the trained weights predict an illegal label, through constraints we can force classifications to a label (potentially the correct one) of a lower score.
+The types of error that joint models help prevent are mainly applicable to arguments where prior knowledge of the parent trigger's label influences the labels for these arguments. E.g., if it is known that the trigger is \emph{None}, then the arguments for such a trigger can be limited to only be of label \emph{None}. Therefore, correct prediction of a label for one candidate will aid in the correct prediction of labels for all other candidates in the same structure.
 
 
 \subsection{Unresolved errors}
 Using the constrained joint model, we can resolve further errors with argument features by enforcing further constraints and heuristics (from studying the dataset) that target specific trigger labels and limit the range of legal possibilities for given argument candidates. This would primarily help resolve errors where candidates with true labels that are not \emph{None} are mislabelled as other non \emph{None} labels. However as observed by the error analysis, these instances are quite rare. 
 
-Although the constraints lower the number of possible label combinations to predict, it does not address the problem of candidates misclassified as \emph{None}. This problem lies with the features chosen. The current features do not help to strongly discriminate between identifying candidates with label \emph{None} against other specific labels. This is why the majority of the incorrectly predicted candidates are labelled as \emph{None}. In the case of the label \emph{Cause}, it is always predicted as \emph{None}. Engineering features that capture information more relevant to specific labels (as opposed to those that are more generic to any label) are how such errors can be resolved.
+Although the constraints lower the number of possible label combinations to predict, it does not address the problem of candidates misclassified as \emph{None}. The current features do not help to strongly discriminate between candidates with label \emph{None} and other specific labels, this is why the majority of the incorrectly predicted candidates are labelled as \emph{None}. In the case of the label \emph{Cause}, it is always predicted as \emph{None}. Engineering features that capture information more relevant to specific labels (as opposed to those that are more generic to any label) are how such errors can be resolved.
 
-Another way to potentially resolve errors could be to change from a joint to a pipeline model. In this pipeline model, triggers could be predicted labels first, then incorporated when predicting arguments. This means feature templates for arguments could access predicted parent token labels. The pipeline model would still effectively be a joint model but the constraints are implemented on a lower level instead, where they can be of a more specific and complex nature.
+Another way to potentially resolve errors could be to change from a joint to a pipeline model. In this pipeline model, trigger labels could be predicted first, then used when predicting arguments. This means feature templates for arguments could access predicted parent token labels. The pipeline model would still effectively be a joint model but the constraints are implemented on a lower level, where they can be of a more specific and complex nature.
 
 \section{Joint Conditional Likelihood}
 
 The conditional log-likelihood objective can be expressed as follows.
-
-
-\[\text{CLL}=\sum_{x_i, c_i} \log p_{\lambda}(c_i | x_i)\]
-
-\[=\sum_{x_i, c_i} \log (Z^{-1}_{\lambda, x_i}) \exp S_{\lambda} (c_i, x_i) \text{ where } Z_{\lambda, x_i} \text{is the normalizer}\]
-
-\[=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - \log Z_{\lambda, x_i}\]
-
-\[=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - \log \sum_{c^{'}_i} \exp S_{\lambda} (c^{'}_i, x_i)    \]
-
-The normaliser can also be expressed as the maximum score over all $c^{'}_i$ for a training example:
-
-\[=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - \log \max_{c^{'}_i} (\exp ) S_{\lambda} (c^{'}_i, x_i)   \]
-
-\[=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - S_{\lambda} (\hat{c_i}, x_i) \text{ , where }   \hat{c_i} = \argmax_{c^{'}_i}  S_{\lambda} (c^{'}_i, x_i)   \]
-
-\[=\sum_{x_i, c_i} \sum_j \lambda_j f_j (c_i, x_i) - \sum_j \lambda_j f_j (\hat{c_i}, x_i)  \text{ , since } S_{\lambda} (c_i, x_i) = \sum_i \lambda_i f_i (c_i, x_i)  \]
+\begin{align*} 
+	\text{CLL}&=\sum_{x_i, c_i} \log p_{\lambda}(c_i | x_i)\\
+	&=\sum_{x_i, c_i} \log (Z^{-1}_{\lambda, x_i}) \exp S_{\lambda} (c_i, x_i) \text{ where } Z_{\lambda, x_i} \text{is the normalizer}\\
+	&=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - \log Z_{\lambda, x_i}\\
+	&=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - \log \sum_{c^{'}_i} \exp S_{\lambda} (c^{'}_i, x_i)\\
+	\intertext{The normaliser can also be expressed as the maximum score over all $c^{'}_i$ for a training example:}
+	&=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - \log \max_{c^{'}_i} (\exp ) S_{\lambda} (c^{'}_i, x_i)\\
+	&=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - S_{\lambda} (\hat{c_i}, x_i) \text{ , where }   \hat{c_i} = \argmax_{c^{'}_i}  S_{\lambda} (c^{'}_i, x_i)\\
+	&=\sum_{x_i, c_i} \sum_j \lambda_j f_j (c_i, x_i) - \sum_j \lambda_j f_j (\hat{c_i}, x_i)  \text{ , since } S_{\lambda} (c_i, x_i) = \sum_i \lambda_i f_i (c_i, x_i)
+\end{align*}
 
 Therefore, the partial derivative is
 
