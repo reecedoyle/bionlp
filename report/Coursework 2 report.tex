@@ -93,11 +93,21 @@ Papers that provided inspiration for features have been referenced next to the f
 
 Our highest weighted feature for this class is having the stem ?transcript' for Transcription events. The feature also works well to discriminate against labels. For example, when the stem is ?inhibit?, a low weighting is given to the token being Positive regulation.
 
+\emph{Increased interleukin 2 transcription in murine lymphocytes by ciprofloxacin}
+
 \textbf{POS of word.} \cite{1} We expect words like conjunctions to be less likely to indicate events; typically we expect events to be verbs since they indicate an action. The highest weighted feature in this class is for tokens with POS tag CC (coordinating conjunction) to have label None. The lowest weighted feature is for tokens with POS tag VBN (verb, past participle) having label None, confirming our intuition that events tend to be verbs. 
+
+Another example is labelling the token as Positive regulation if its POS is JJR (adjective, comparative). In our sentence below, the word \emph{stronger} is tagged as JJR.
+
+\emph{Patients with diabetic nephropathy showed higher NF-kappaB binding activity in Electrophoretic Mobility Shift Assays and stronger immunohistological staining for activated NF-kappaBp65 than patients without renal complications}
 
 We see that this feature performs strongest in determining whether or not a token is of label None.
 
 \textbf{Capitalisation.} \cite{1} This feature counts the number of capital letters in the token. The immediate downside of this feature is that we also consider tokens that start at the beginning of a sentence which are capitalised regardless of their event classification. 
+
+A highly weighted instance of this feature is assigning the token label Positive regulation when it has 2 capital letters, as in \emph{the word} in the sentence below.
+
+\emph{fucked for now}
 
 \subsubsection{Entity-based}
 
@@ -107,11 +117,13 @@ We see that this feature performs strongest in determining whether or not a toke
 
 \textbf{Dependencies.} \cite{4} This class of features looks at the grammatical relations between words. Dependencies are an edge between two related words 'head' and 'mod' where 'head' refers to the source of the dependency and 'mod' is dependent on head. Experimentally we see that only considering dependencies as a feature doesn't perform well (this is a feature we implemented but chose not to select in the final set), so we also consider the POS and stem of the related dependency to our token. We think this is because whatever the explanation is. 
 
-We consider features involving the mod/head, stem of the parent, dependency and POS. Here our token is the head. We consider these dependencies up to a depth of 3, meaning that if we have an edge between tokens A and B, we also consider the dependency between B and C and C and D (if they exist). An example of a well performing feature is assigning the Binding label to tokens where the edge to its associated token is prepAs (prepositional binding) and the associated token's POS is VBZ (verb, third person singular present).
+We consider features involving the mod/head, stem of the parent, dependency and POS. Here our token is the head. We consider these dependencies up to a depth of 3, meaning that if we have an edge between tokens A and B, we also consider the dependency between B and C and C and D (if they exist). An example of a well performing feature is assigning the Binding label to tokens where the edge to its associated token is prepAs (prepositional binding) and the associated token's POS is VBZ (verb, third person singular present). An example is given in Figure \ref{fig:dep_pos_mod}.
 
 \subsubsection{Other}
 
 \textbf{Context.} \cite{1} We capture the stems of immediately surrounding tokens. These tokens give us an understanding of the context in which the token is being used. We see in many cases that the previous token gives a clear indication of what the current token is. Our highest weighted feature for this class highly weights tokens being labelled as Transcription when the previous token is 'mRNA'. The previous word helps limit the events that the current token can be, so it works well in discriminating between all event labels. As a result, we see that we have highly negatively weighted features as well such as assigning the label Gene expression when the previous token is 'mRNA'.
+
+\emph{There was no difference in the effects of AzaC versus AzadC , as both increased the IRF-4 mRNA level in CML-T1 cells as well ( data not shown )}
 
 Features which look at the next token do not discriminate between the current token's possible labels as well as the previous token, but they help nonetheless. An example is assigning the label Positive regulation when the next token has stem 'chromosom'.
 
@@ -150,7 +162,7 @@ Features which look at the next token do not discriminate between the current to
 
 \subsubsection{Lexical}
 
-\textbf{POS.} Part-of-speech features can provide semantic and contextual information related to the candidate and parent tokens of the data sets. For example, theme arguments generally have a part-of-speech value of 'NN', which can be used to differentiate theme arguments from cause and none types. Looking at the part-of-speech value for events can reveal information related to their child arguments as certain events are likely to have a specific part-of-speech related to them. The part-of-speech values can be combined to create unique pairs of them which can be used to map a specific argument classes to part-of-speech pairings in a one-to-many relationship.
+\textbf{POS.} Part-of-speech features can provide semantic and contextual information related to the candidate and parent tokens of the data sets. For example, theme arguments generally have a part-of-speech value of 'NN', which can be used to differentiate theme arguments from cause and none types. Looking at the part-of-speech value for events can reveal information related to their child arguments as certain events are likely to have a specific part-of-speech related to them. The part-of-speech values can be combined to create unique pairs of them which can be used to map a specific argument classes to part-of-speech pairings in a one-to-many relationship. Refer to Figure \ref{fig:pos_candidate_parent} as an example.
 
 \textbf{Value of word.} The word value of candidates and parents can be used as base measures to classify arguments as they will give a base relation between specific words and how they are related to arguments. Certain argument types are likely to relate to specific sets of words so creating features based on these values should provide a large amount of data for the classifier models to use. Conjunctions of word based features can also be used to create specific word pairs or sets that can be used to target argument types with higher precision.
 
@@ -160,13 +172,13 @@ Features which look at the next token do not discriminate between the current to
 
 \subsubsection{Entity-based}
 
-\textbf{Candidate is a protein.} Upon inspection, many of the arguments of type cause and theme contain the protein tag under the mentions section. Therefore, we can filter out the arguments of type none by identifying whether the candidate is a protein or not.
+\textbf{Candidate is a protein.} Upon inspection, many of the arguments of type cause and theme contain the protein tag under the mentions section. Therefore, we can filter out the arguments of type none by identifying whether the candidate is a protein or not. Refer to Figure \ref{fig:candidate_is_protein} as an example.
 
 \textbf{Number of proteins.} Following on from the last feature, if there are no proteins in a sentence, then it is likely that the arguments in the sentence are of type none. As such, counting the number of proteins in the sentence can reveal the classification of the candidate.
 
 \subsubsection{Syntax-based}
 
-\textbf{McClosky dependency between candidate and parent.} \cite{1} In general, a specific type of McClosky dependency exists between an event and its arguments. Therefore, we can use these dependencies to map to specific argument types in order to classify a candidate.
+\textbf{McClosky dependency between candidate and parent.} \cite{1} In general, a specific type of McClosky dependency exists between an event and its arguments. Therefore, we can use these dependencies to map to specific argument types in order to classify a candidate. Refer to Figure \ref{fig:mc_dep_candidate_parent} as an example.
 
 \textbf{Number of McClosky dependencies on candidate.} Counting the number of dependencies on the candidate can provide insight on what argument type it may be as arguments of a specific type can have more dependencies than others. In addition to this, it also recognises events which are also arguments effectively as they are likely to have many dependencies and relationships with other tokens in the data.
 
@@ -182,7 +194,7 @@ Features which look at the next token do not discriminate between the current to
 
 \textbf{Absolute token distance between candidate and parent.} \cite{2} From observing the training data, it can be seen that arguments are often located close to their parent token, meaning that bounds can be set to filter out arguments of type none. This value can be obtained as an absolute value or signed value to determine whether the candidate lies on the left or right side of it?s parent which can be used to obtain more positional information for specific arguments. Upon inspection of the training data, most distances above the value of 40 tended to be none-type arguments so the value was used as a cutoff point feature to classify none tokens.
 
-\textbf{Candidate part-of-speech is 'NN' and is a protein.} A combination of part-of-speech and whether the candidate is a protein or not can be used to classify theme arguments specifically. From observation of the training set, there are an abundance of cases where a theme argument has the part-of-speech 'NN' and is also a protein.
+\textbf{Candidate part-of-speech is 'NN' and is a protein.} A combination of part-of-speech and whether the candidate is a protein or not can be used to classify theme arguments specifically. From observation of the training set, there are an abundance of cases where a theme argument has the part-of-speech 'NN' and is also a protein. Refer to Figure \ref{candidate_nn_protein} as an example.
 
 \subsubsection{Perceptron features}
 
@@ -397,7 +409,44 @@ Another way to potentially resolve errors could be to change from a joint model 
 \newpage
 \begin{appendices}
 \section{Examples of trigger features}
+
+\begin{figure}[H]
+  \caption{Dependency type of POS of mod}
+  \centering
+    \includegraphics[width=0.75\textwidth]{images/trig_1.png}
+      \label{fig:dep_pos_mod}
+\end{figure}
+
 \section{Examples of argument features}
+
+\begin{figure}[H]
+  \caption{POS of candidate and parent}
+  \centering
+    \includegraphics[width=0.75\textwidth]{images/arg_1.png}
+      \label{fig:pos_candidate_parent}
+\end{figure}
+
+\begin{figure}[H]
+  \caption{Candidate is a protein}
+  \centering
+    \includegraphics[width=0.75\textwidth]{images/arg_4.png}
+      \label{fig:candidate_is_protein}
+\end{figure}
+
+\begin{figure}[H]
+  \caption{McClosky dependency between candidate and parent}
+  \centering
+    \includegraphics[width=0.30\textwidth]{images/arg_7.png}
+      \label{fig:mc_dep_candidate_parent}
+\end{figure}
+
+\begin{figure}[H]
+  \caption{Candidate POS is NN and is a protein}
+  \centering
+    \includegraphics[width=0.30\textwidth]{images/arg_10.png}
+      \label{candidate_nn_protein}
+\end{figure}
+
 \end{appendices}
 
 \bibliography{references}{}
