@@ -11,6 +11,8 @@
 \usepackage{caption} 
 \captionsetup[table]{skip=10pt}
 \usepackage{cite}
+\usepackage{amsmath}
+\DeclareMathOperator*{\argmax}{arg\,max}
 
 
 %\documentstyle[nips14submit_09,times,art10]{article} % For LaTeX 2.09
@@ -329,7 +331,8 @@ Using the default split of 80\% training data and 20\% development data from 500
 \end{tabular}
 }
 \end{table}
-The results in Table \ref{table:all_perf} show that, overall, the joint models improve upon the per-task models. The unconstrained joint model is a massive improvement over the isolated argument model, with almost a doubling in average precision and a sacrifice of average recall resulting in a higher harmonic mean (F1) of the two metrics. However, the unconstrained joint model performs worse than the isolated trigger model in both precision and recall, though the improved argument labelling certainly outweighs this. The constrained joint model further improves upon the F1 score for arguments despite a decrease in average recall. It is likely that the average precision of the constrained model for arguments is greater than that of the unconstrained model because the constraints restrict the number of labels that are available for certain arguments, given the labelling of their parent trigger - this decreases the probability of an argument being mislabelled.\\
+The results in Table \ref{table:all_perf} show that, overall, the joint models improve upon the per-task models. The unconstrained joint model is a massive improvement over the isolated argument model, with almost a doubling in average precision and a sacrifice of average recall resulting in a higher harmonic mean (F1) of the two metrics. However, the unconstrained joint model performs worse than the isolated trigger model in both precision and recall, though the improved argument labelling certainly outweighs this. The constrained joint model further improves upon the F1 score for arguments despite a decrease in average recall. It is likely that the average precision of the constrained model for arguments is greater than that of the unconstrained model because the constraints restrict the number of labels that are available for certain arguments, given the labelling of their parent trigger - this decreases the probability of an argument being mislabelled.
+
 For trigger classification, the isolated model performs slightly better than the unconstrained model but the constrained model has a much higher average harmonic mean score than both. As with the labelling of arguments, the constrained joint model has a lower average recall than the other two models for the labelling of triggers but the average precision is much better. Again, this is likely to be due to the constraints restricting the labels available for the arguments, based on the labelling of the trigger. This means that if the most likely label for a trigger is incorrect and its arguments violate the constraints for that label, then it is likely that the trigger will be relabelled according to what fits best for the labelling of the arguments.
 
 \section{Error Analysis}
@@ -397,7 +400,50 @@ Although the constraints lower the number of possible label combinations to pred
 
 Another way to potentially resolve errors could be to change from a joint to a pipeline model. In this pipeline model, triggers could be predicted labels first, then incorporated when predicting arguments. This means feature templates for arguments could access predicted parent token labels. The pipeline model would still effectively be a joint model but the constraints are implemented on a lower level instead, where they can be of a more specific and complex nature.
 
+\section{Joint Conditional Likelihood}
 
+The conditional log-likelihood objective can be expressed as follows.
+
+
+\[\text{CLL}=\sum_{x_i, c_i} \log p_{\lambda}(c_i | x_i)\]
+
+\[=\sum_{x_i, c_i} \log (Z^{-1}_{\lambda, x_i}) \exp S_{\lambda} (c_i, x_i) \text{ where } Z_{\lambda, x_i} \text{is the normalizer}\]
+
+\[=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - \log Z_{\lambda, x_i}\]
+
+\[=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - \log \sum_{c^{'}_i} \exp S_{\lambda} (c^{'}_i, x_i)    \]
+
+The normaliser can also be expressed as the maximum score over all $c^{'}_i$ for a training example:
+
+\[=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - \log \max_{c^{'}_i} (\exp ) S_{\lambda} (c^{'}_i, x_i)   \]
+
+\[=\sum_{x_i, c_i} S_{\lambda} (c_i, x_i) - S_{\lambda} (\hat{c_i}, x_i) \text{ , where }   \hat{c_i} = \argmax_{c^{'}_i}  S_{\lambda} (c^{'}_i, x_i)   \]
+
+\[=\sum_{x_i, c_i} \sum_j \lambda_j f_j (c_i, x_i) - \sum_j \lambda_j f_j (\hat{c_i}, x_i)  \text{ , since } S_{\lambda} (c_i, x_i) = \sum_i \lambda_i f_i (c_i, x_i)  \]
+
+Therefore, the partial derivative is
+
+\[ \frac{\delta \text{ CLL}}{\delta f_j} = \sum_{x_i, c_i} f_j (c_i, x_i) - f_j (\hat{c_i}, x_i)        \]
+
+Giving the gradient
+
+\[ \sum_j \sum_{x_i, c_i} f_j (c_i, x_i) - f_j (\hat{c_i}, x_i)        \]
+
+As the derivation shows, the gradient of the conditional likelihood objective is the empirical expectation minus the predicted expectation for each feature and training example. During each epoch of gradient ascent, the gradient needs to be evaluated but this can take $\mathcal{O}(nd)$ time, where $n$ is the number of training examples and $d$ is their dimensionality. It is therefore prohibitively expensive to calculate these expectations for every epoch: this is a naive approach.
+
+A tractable method for evaluating the gradient would involve either not using all training examples or not using all features, our proposed method chooses the former of these two. Instead of summing the expectations of all training instances, a training instance is uniformly chosen at random to be used in calculating the expectations and then this is multiplied by the size of the training set, $n$, to give the gradient. For a training instance $(c,x)$, we have $n \sum_j f_j (c, x) - f_j (\hat{c}, x)$.
+
+The pseudocode for the algorithm is given below.
+
+\begin{verbatim}
+gradient(trainingSet, features):
+  sum = 0
+  instance = random instance from trainingSet // (label,data) tuple
+  for(feat in features):
+    predicted = argmax(instance) // returns the predicted label for the instance
+    sum += feat(instance) - feat(predicted,instance.data)
+  return sum * trainingSet.size
+\end{verbatim}
 
 \newpage
 \begin{appendices}
